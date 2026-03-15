@@ -1,0 +1,226 @@
+[
+  {
+    "scene": "HookScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "NOVA",
+    "text": "AI使えば仕事速くなるんでしょ？"
+  },
+  {
+    "scene": "HookScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "ZERO",
+    "text": "2025年、METR社がベテラン開発者16人で実験した。AI使用グループは19パーセント遅くなった。"
+  },
+  {
+    "scene": "HookScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "NOVA",
+    "text": "遅くなった？速くじゃなくて？"
+  },
+  {
+    "scene": "HookScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "ZERO",
+    "text": "しかも本人たちは24パーセント速くなったと思い込んでた。実際は19パーセント遅い。認識と現実のギャップ、43ポイント。これがAI生産性パラドックスだ。"
+  },
+  {
+    "scene": "ConflictScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "NOVA",
+    "text": "でもさ、Copilotはもうコードの46パーセント書いてるよ？Javaなら61パーセント。"
+  },
+  {
+    "scene": "ConflictScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "ZERO",
+    "text": "書いてる。で、GitHubの自社調査でコード品質の改善は3.6パーセント。46パーセント書いて3.6パーセントしか良くならない。この数字、おかしいと思わないか？"
+  },
+  {
+    "scene": "ConflictScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "NOVA",
+    "text": "…確かに。企業レベルだとどうなの？"
+  },
+  {
+    "scene": "ConflictScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "ZERO",
+    "text": "PwCが95カ国4454人のCEOに聞いた。56パーセントがAI投資からリターンゼロ。さらにNBERの調査で管理職の89パーセントが生産性変化なしと回答。"
+  },
+  {
+    "scene": "ConflictScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "NOVA",
+    "text": "CEO半分以上がゼロ、管理職9割が変化なし…。なんでこうなるの？"
+  },
+  {
+    "scene": "InvestigationScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "ZERO",
+    "text": "原因1。Workdayの2026年調査。AIで節約したはずの時間の40パーセントが、出力の確認と修正に消えてる。節約1時間のうち24分は確認作業だ。"
+  },
+  {
+    "scene": "InvestigationScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "NOVA",
+    "text": "節約した気になってるだけってこと？"
+  },
+  {
+    "scene": "InvestigationScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "ZERO",
+    "text": "もっとひどい。Fortuneの2026年3月の報告。AI導入後、メールに費やす時間が2倍になった。集中作業の時間は9パーセント減少。速くなるどころか、雑務が増えてる。"
+  },
+  {
+    "scene": "InvestigationScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "NOVA",
+    "text": "メール2倍！？なんで！？"
+  },
+  {
+    "scene": "InvestigationScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "ZERO",
+    "text": "AIが簡単にメールを生成できるから、みんながメールを大量に送るようになった。結果、受信側の処理が爆増した。生産性が個人から組織に転嫁されただけだ。"
+  },
+  {
+    "scene": "InvestigationScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "NOVA",
+    "text": "あぁ…送る側は楽になっても、読む側が地獄になるのか。"
+  },
+  {
+    "scene": "InvestigationScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "ZERO",
+    "text": "原因2。BCGとハーバードの1488人調査。AIツールを4つ以上使うと脳が過負荷になる。彼らはこれをAIブレインフライと呼んでる。重大ミスが39パーセント増加、判断疲れが33パーセント増加。"
+  },
+  {
+    "scene": "InvestigationScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "NOVA",
+    "text": "ツール増やすほど逆効果ってこと？"
+  },
+  {
+    "scene": "InvestigationScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "ZERO",
+    "text": "3つまでは効果がある。4つ目から崩壊する。しかもMDPIの研究で、AI使用頻度と批判的思考力に負の相関が見つかってる。脳が考えることを外注し始める。"
+  },
+  {
+    "scene": "TwistScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "NOVA",
+    "text": "データは分かった。じゃあ実際にAI全面導入した企業はどうなった？"
+  },
+  {
+    "scene": "TwistScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "ZERO",
+    "text": "Klarna。2024年、カスタマーサポート700人を全員AIに置き換えた。CEOは公の場で自慢した。株価も上がった。"
+  },
+  {
+    "scene": "TwistScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "NOVA",
+    "text": "成功じゃん？"
+  },
+  {
+    "scene": "TwistScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "ZERO",
+    "text": "半年後、顧客満足度が22パーセント低下。AIが対応できない問題が噴出して、エンジニアが電話対応に駆り出された。結局CEOが公式に失敗を認めて人間を再雇用した。"
+  },
+  {
+    "scene": "TwistScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "NOVA",
+    "text": "700人切って、エンジニアに電話させて、また雇い直したの！？"
+  },
+  {
+    "scene": "TwistScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "ZERO",
+    "text": "CEOの原文がこれだ。コスト削減を重視しすぎた、その結果品質が落ちた。そしてKlarnaだけじゃない。Forresterの調査で、AIで人を置き換えた企業の55パーセントが後悔してると回答。Gartnerは2027年までに半数が再雇用すると予測してる。"
+  },
+  {
+    "scene": "TwistScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "NOVA",
+    "text": "半分以上が後悔…。じゃあAI全部ダメなの？"
+  },
+  {
+    "scene": "TwistScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "ZERO",
+    "text": "BCGの調査で答えが出てる。60パーセントの企業はAIから価値を出せていない。成功してるのは5パーセントだけ。その5パーセントの共通点は、全業務にばらまくんじゃなく、高コスト業務にだけAIを集中投入してる。"
+  },
+  {
+    "scene": "ResolutionScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "NOVA",
+    "text": "選んで使えってことか。具体的にどうすれば上位5パーセントに入れる？"
+  },
+  {
+    "scene": "ResolutionScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "ZERO",
+    "text": "ルールは3つ。1、AIツールは3つまでに絞れ。4つ以上でブレインフライが起きる。2、確認に本体以上の時間がかかるタスクにAIを使うな。メールと短文チャットが典型だ。3、AIの出力を鵜呑みにするな。コードの45パーセントにセキュリティ欠陥がある。"
+  },
+  {
+    "scene": "ResolutionScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "NOVA",
+    "text": "つまりAIは便利だけど、速くなった気がするだけの可能性がある。自分の実際の作業時間をちゃんと計れってことだね。"
+  },
+  {
+    "scene": "ResolutionScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "ZERO",
+    "text": "METRの実験が証明してる。体感と現実は一致しない。数字で計測しろ。それだけで上位5パーセントに入れる。"
+  },
+  {
+    "scene": "OutroScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "NOVA",
+    "text": "AGENT ZEROでは毎週、AIの常識をデータで検証してます。チャンネル登録と通知オンで見逃さないでね！"
+  },
+  {
+    "scene": "OutroScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "ZERO",
+    "text": "次回。AIが存在しないライブラリを20パーセントの確率で推薦してくる問題。スロップスクワッティングの闇を暴く。"
+  }
+]

@@ -1,0 +1,50 @@
+{
+  "id": "body_lab",
+  "name": "BODY LAB",
+  "genre": "健康・筋トレ・ダイエット検証",
+  "concept": "健康・ダイエット・筋トレの「常識」を最新科学データで検証する",
+  "target": "健康・ボディメイクに興味がある20〜40代",
+  "format": "科学的検証・データ比較",
+  "video_length_min": 3,
+  "video_length_max": 5,
+  "has_short": true,
+  "colors": {
+    "background": "#080f0a",
+    "surface": "#0e1a10",
+    "primary": "#4ade80",
+    "secondary": "#86efac",
+    "danger": "#f87171",
+    "text": "#f0fdf4",
+    "muted": "#4b7a55"
+  },
+  "fonts": {
+    "heading": "DM Sans",
+    "mono": "DM Mono",
+    "japanese": "Noto Sans JP"
+  },
+  "characters": {
+    "main": {
+      "name": "DOC",
+      "role": "運動生理学者。感情なくデータで語る",
+      "tone": "科学的・断言・シンプル",
+      "edge_tts_voice_ja": "ja-JP-KeitaNeural"
+    },
+    "sub": {
+      "name": "GYM",
+      "role": "ジム通いの普通人。よくある誤解を代弁",
+      "tone": "熱心・素朴・驚きやすい",
+      "edge_tts_voice_ja": "ja-JP-NanamiNeural"
+    }
+  },
+  "script_structure": "HOOK→CONFLICT→INVESTIGATION→TWIST→RESOLUTION",
+  "hook_pattern": "「〇〇すれば痩せる/健康になる」という常識をデータで検証",
+  "twist_requirement": "ヘルス系の常識が科学データで覆る展開が必須",
+  "search_keywords": [
+    "ダイエット 嘘",
+    "筋トレ 科学",
+    "健康 常識 嘘",
+    "食事 データ"
+  ],
+  "youtube_category_id": "22",
+  "channel_footer": "▼ BODY LAB\n健康・筋トレ・ダイエットの常識を科学で検証するチャンネル\nDOC と GYM が毎週検証 | チャンネル登録お願いします"
+}

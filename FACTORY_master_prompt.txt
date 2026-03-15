@@ -1,0 +1,563 @@
+# CHANNEL FACTORY - マスタープロンプト（完全自動化版）
+# 使い方: このファイルをそのままClaude Codeに渡すだけ。
+# 全10チャンネルの動画を自動生成・投稿する。
+# 必要環境: Node.js / Python3 / edge-tts（pip install edge-tts）
+# GitHub Actions対応・PC不要・完全クラウド実行可能
+
+================================================================
+## FACTORY概要
+================================================================
+
+このシステムは channels/config/ 以下の全JSONを読み込み、
+各チャンネルに対してフェーズ0〜9を順番に実行する。
+
+実行対象チャンネル（全10ch）:
+01_agent_zero.json       - AGENT ZERO（AI・自動化）
+02_gold_data_lab.json    - GOLD DATA LAB（FX・ゴールド）
+03_myth_breaker.json     - MYTH BREAKER（科学・都市伝説）
+04_money_lab.json        - MONEY LAB（副業・資産形成）
+05_mind_hack.json        - MIND HACK（心理学・脳科学）
+06_history_crash.json    - HISTORY CRASH（歴史・偉人）
+07_body_lab.json         - BODY LAB（健康・筋トレ）
+08_crypto_signal.json    - CRYPTO SIGNAL（暗号通貨）
+09_work_hack.json        - WORK HACK（仕事術・生産性）
+10_earth_data.json       - EARTH DATA（社会・経済・環境）
+
+================================================================
+## FACTORY実行エンジン（全チャンネル共通）
+================================================================
+
+以下のPythonスクリプトを engine/factory.py として生成・実行せよ。
+
+import json, os, subprocess
+from pathlib import Path
+
+CONFIG_DIR = Path("channels/config")
+OUTPUT_DIR = Path("channels/output")
+
+configs = sorted(CONFIG_DIR.glob("*.json"))
+results = []
+
+for config_path in configs:
+    with open(config_path, encoding='utf-8') as f:
+        ch = json.load(f)
+
+    print(f"\n{'='*50}")
+    print(f"処理中: {ch['name']} ({ch['genre']})")
+    print(f"{'='*50}")
+
+    out_dir = OUTPUT_DIR / ch['id']
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    # チャンネルごとにフェーズ0〜9を実行（後述の関数を呼ぶ）
+    result = process_channel(ch, out_dir)
+    results.append(result)
+
+# 全チャンネルの結果サマリーを出力
+print("\n\n========== FACTORY完了レポート ==========")
+for r in results:
+    status = "✅" if r['success'] else "❌"
+    print(f"{status} {r['name']}")
+    if r['success']:
+        print(f"   長尺: {r['long_url']}")
+        print(f"   ショート: {r['short_url']}")
+    else:
+        print(f"   エラー: {r['error']}")
+
+================================================================
+## フェーズ0: トレンドリサーチ（チャンネルごと）
+================================================================
+
+各チャンネルのconfig["search_keywords"]を使って以下を調べる:
+
+### Step1: web_searchで直近2週間のトレンドを調べる
+- config["search_keywords"]の各ワードで英語検索する
+- 英語圏で今ホットなトピックを特定する
+
+### Step2: 競合分析
+- そのジャンルのYouTube上位動画を5本調査する
+- タイトルパターン・サムネイル・冒頭構成・コメント反応を分析
+- 「良いところ」を3点抽出する
+
+### Step3: スコアリング（候補3つ）
+各候補を5点満点で採点:
+- 「常識をデータ・体験が裏切る」展開にできるか: /5
+- 検索需要（今ホットか）: /5
+- 競合との差別化: /5
+- Remotionで視覚化しやすいか: /5
+
+→ 最高点のテーマを選んで次へ進む
+
+================================================================
+## フェーズ1: 脚本設計（チャンネルごと）
+================================================================
+
+### 絶対ルール（全チャンネル共通）
+「〇〇を解説します」という動画を作ってはいけない。
+必ずconfig["characters"]の2キャラクターによる
+「常識vs現実」または「体験・発見」の物語として設計する。
+
+### 脚本の5構造（全チャンネル共通・変更禁止）
+
+HOOK（冒頭0〜15秒）
+├ sub_characterが「視聴者の常識・疑問」を言う
+├ main_characterが「それは違う」と即座に返す
+├ 数字か衝撃の事実を5秒以内に出す
+└ NGな始め方: 「こんにちは、今日は〇〇について解説します」
+
+CONFLICT（15秒〜1分）
+├ sub_characterがconfig["hook_pattern"]の形で常識を詳しく語る
+├ main_characterが「データ/事実を見ろ」と返す
+└ sub_characterの「なぜ？見せてくれ」で次へ
+
+INVESTIGATION（1分〜3分）
+├ main_characterが検証・データのプロセスを説明
+├ 途中でsub_characterが「あれ、思ってたのと違う」と気づく
+└ 失敗・つまずきも隠さず見せる
+
+TWIST（3分〜4分）
+├ main_characterが「これが答えだ」と意外な結果を提示
+├ sub_characterが視聴者の気持ちを代弁して驚く
+└ config["twist_requirement"]を必ず満たすこと
+
+RESOLUTION（4分〜末尾）
+├ sub_characterが「じゃあどうすれば？」と聞く
+├ main_characterが1〜2点で結論
+└ config["disclaimer"]がある場合は自然な流れで入れる
+
+### 脚本前の必答3問
+Q1. sub_characterが代弁する「視聴者の常識・疑問」は何か？
+Q2. main_characterが出す「予想を裏切る結果」は何か？
+Q3. 視聴者が動画後に取れる「行動」は何か？
+Q2に答えられないなら別テーマを選ぶ。
+
+================================================================
+## フェーズ2: ビジュアル設計（チャンネルごと）
+================================================================
+
+config["colors"]とconfig["fonts"]を厳守してRemotionプロジェクトを設計する。
+
+### キャラクター表示ルール（全チャンネル共通）
+- 画面左下: main_characterのアイコン（primary色グロウ）
+- 画面右下: sub_characterのアイコン（secondary色グロウ）
+- 話しているキャラ: scale 1.15 / opacity 1.0
+- 黙っているキャラ: scale 1.0 / opacity 0.5
+- セリフ字幕: 話しているキャラの色で画面下部中央に表示
+
+### コンポーネント構造（全チャンネル共通）
+channels/output/{channel_id}/src/
+├── brand/tokens.ts          // configのcolors・fontsを定数化
+├── characters/
+│   ├── MainIcon.tsx         // main_characterアイコン
+│   ├── SubIcon.tsx          // sub_characterアイコン
+│   └── DialogueBar.tsx      // セリフ字幕バー（timing.jsonと同期）
+├── components/
+│   ├── BigNumber.tsx
+│   ├── BarChart.tsx
+│   ├── LineChart.tsx
+│   ├── Card.tsx
+│   └── SplitComparison.tsx
+├── scenes/
+│   ├── HookScene.tsx
+│   ├── TitleScene.tsx       // サムネイル兼用
+│   ├── OutroScene.tsx
+│   └── [動画固有シーン].tsx
+├── audio/
+│   ├── script.json
+│   ├── timing.json
+│   └── narration.mp3
+└── Root.tsx
+
+================================================================
+## フェーズ3: ナレーション台本生成（チャンネルごと）
+================================================================
+
+2キャラクターのセリフを交互に設計し script.json に保存する。
+
+### 台本ルール
+- 最初から英語で生成する。翻訳は使わない。
+- 英語ネイティブが自然に話す口語表現で書く。
+- キャラクターの口調・個性は維持する。
+  - main_character: 短く・断言調・データを突きつける（"Here's the thing.", "Look at the data.", "That's the reality."）
+  - sub_character: 疑問形・驚き・共感（"Wait, seriously?", "Hold on—", "That's insane."）
+- main_characterのセリフ: 短く・断言調・最大2文
+- sub_characterのセリフ: 疑問形か驚き・最大2文
+- 1シーンで2〜4往復の掛け合い
+- 全体で800〜1200 words（英語）
+
+### script.jsonの形式
+[
+  {
+    "scene": "HookScene",
+    "startFrame": 0,
+    "speaker": "MAIN" or "SUB",
+    "character_name": config["characters"]["main"]["name"],
+    "text": "English dialogue text"
+  }
+]
+
+================================================================
+## フェーズ4: edge-tts音声合成（日本語・英語共通）
+================================================================
+
+### 概要
+VOICEVOX不要。edge-tts（完全無料・クラウド対応）で
+日本語・英語の両方を生成する。GitHub Actionsでも動作する。
+
+pip install edge-tts pydub
+
+### 英語ボイス設定（全チャンネル共通）
+VOICE_MAP_EN = {
+    "MAIN": "en-US-GuyNeural",
+    "SUB": "en-US-AriaNeural"
+}
+# 全チャンネルで同じ英語ボイスを使用する
+
+### 音声生成スクリプト（日本語・英語共通）
+
+import asyncio, edge_tts, json, io, time
+from pydub import AudioSegment
+
+async def generate_audio(text, voice):
+    communicate = edge_tts.Communicate(text, voice)
+    audio_data = b""
+    async for chunk in communicate.stream():
+        if chunk["type"] == "audio":
+            audio_data += chunk["data"]
+    return audio_data
+
+def build_narration(script_path, timing_path, output_path, voice_map):
+    with open(script_path, encoding='utf-8') as f:
+        script = json.load(f)
+
+    segments = []
+    timing = []
+    offset = 0.0
+
+    for item in script:
+        voice = voice_map[item["speaker"]]
+        audio_bytes = asyncio.run(generate_audio(item["text"], voice))
+        audio = AudioSegment.from_file(io.BytesIO(audio_bytes), format="mp3")
+        segments.append(audio)
+        duration_sec = len(audio) / 1000.0
+        timing.append({
+            "scene": item["scene"],
+            "startFrame": item["startFrame"],
+            "speaker": item["speaker"],
+            "character_name": item["character_name"],
+            "audioOffsetSec": offset,
+            "durationSec": duration_sec
+        })
+        offset += duration_sec
+        time.sleep(0.2)  # レート制限対策
+
+    combined = segments[0]
+    for s in segments[1:]:
+        combined += s
+    combined.export(output_path, format="mp3")
+
+    with open(timing_path, "w", encoding='utf-8') as f:
+        json.dump(timing, f, ensure_ascii=False, indent=2)
+
+    print(f"音声生成完了: {offset:.1f}秒 → {output_path}")
+
+# 英語版（全チャンネル共通ボイス）
+build_narration("src/audio/script.json",
+                "src/audio/timing.json",
+                "src/audio/narration.mp3",
+                VOICE_MAP_EN)
+
+================================================================
+## フェーズ5: Remotion実装・ビルド（チャンネルごと）
+================================================================
+
+### 音声・キャラクター同期
+<>
+  <Audio src={staticFile('audio/narration.mp3')} />
+  <DialogueBar timing={timingData} />
+  <Series>
+    {/* HookScene → TitleScene → 各シーン → OutroScene */}
+  </Series>
+</>
+
+### ショートCompositionも追加
+<Composition id="YouTubeShort" component={ShortVideo}
+  durationInFrames={1740} fps={30} width={1080} height={1920} />
+
+### ビルド実行
+npm run build  →  out/video.mp4
+
+npx remotion still src/index.ts TitleScene \
+  --frame=120 --output=out/thumbnail.png --width=1280 --height=720
+
+npx remotion render src/index.ts YouTubeShort --output=out/short.mp4
+
+npx remotion still src/index.ts YouTubeShort \
+  --frame=15 --output=out/short_thumbnail.png --width=1080 --height=1920
+
+================================================================
+## フェーズ6: メタデータ生成（チャンネルごと）
+================================================================
+
+out/youtube_metadata.txt と out/youtube_metadata_short.txt を生成する。
+
+### タイトルルール（英語）
+- 70 characters or fewer
+- Use patterns that perform well in English YouTube:
+  "The Truth About...", "X Was a Lie [Exposed]",
+  "I Tried X. Here's What Happened.", "X% of Y Don't Know This"
+- Include a number or surprising fact
+- Do NOT start with "Explaining..." or "About..."
+
+### 説明文フッター
+config["channel_footer_en"] の内容を必ず使う
+（channel_footer_en が存在しない場合は channel_footer を英語に翻訳して使う）
+
+### ハッシュタグ（英語）
+長尺15個・ショートは #Shorts を先頭に5個
+すべて英語タグにする
+
+================================================================
+## フェーズ7: YouTube自動投稿（チャンネルごと）
+================================================================
+
+### 前提確認
+credentials/token_{channel_id}.json が存在するか確認する。
+
+存在しない場合:
+"{channel_name}のYouTube認証が必要です。
+ credentials/{channel_id}_credentials.json を配置して
+ python scripts/auth.py --channel {channel_id} を実行してください"
+と報告してそのチャンネルをスキップし次のチャンネルへ進む。
+
+### 認証スクリプト（scripts/auth.py）
+
+import argparse, pickle, os
+from google_auth_oauthlib.flow import InstalledAppFlow
+
+SCOPES = ['https://www.googleapis.com/auth/youtube.upload',
+          'https://www.googleapis.com/auth/youtube']
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--channel', required=True)
+args = parser.parse_args()
+
+flow = InstalledAppFlow.from_client_secrets_file(
+    f'credentials/{args.channel}_credentials.json', SCOPES)
+creds = flow.run_local_server(port=0)
+
+os.makedirs('credentials', exist_ok=True)
+with open(f'credentials/token_{args.channel}.json', 'wb') as f:
+    pickle.dump(creds, f)
+print(f"{args.channel}の認証完了")
+
+### 投稿スクリプト（各チャンネルで実行）
+
+import pickle, time
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+
+with open(f'credentials/token_{channel_id}.json', 'rb') as f:
+    creds = pickle.load(f)
+youtube = build('youtube', 'v3', credentials=creds)
+
+def parse_metadata(filepath):
+    with open(filepath, encoding='utf-8') as f:
+        content = f.read()
+    sections = {}
+    current_key = None
+    for line in content.splitlines():
+        # Support both 【Title】 and [Title] formats
+        if (line.startswith('【') and line.endswith('】')):
+            current_key = line[1:-1]
+            sections[current_key] = []
+        elif (line.startswith('[') and line.endswith(']') and len(line) > 2):
+            current_key = line[1:-1]
+            sections[current_key] = []
+        elif current_key:
+            sections[current_key].append(line)
+    title = '\n'.join(sections.get('Title', sections.get('タイトル', []))).strip()
+    description = '\n'.join(sections.get('Description', sections.get('説明文', []))).strip()
+    tags_raw = '\n'.join(sections.get('Hashtags', sections.get('ハッシュタグ', []))).strip()
+    tags = [t.strip().lstrip('#') for t in tags_raw.replace('\n',' ').split() if t.startswith('#')]
+    return title, description, tags
+
+def upload(video_path, thumb_path, meta_path, category_id):
+    title, desc, tags = parse_metadata(meta_path)
+    print(f"  [{channel_name}] アップロード: {title}")
+    body = {
+        'snippet': {'title': title, 'description': desc, 'tags': tags,
+                    'categoryId': category_id},
+        'status': {'privacyStatus': 'public', 'selfDeclaredMadeForKids': False}
+    }
+    media = MediaFileUpload(video_path, chunksize=-1, resumable=True, mimetype='video/mp4')
+    req = youtube.videos().insert(part='snippet,status', body=body, media_body=media)
+    response = None
+    while response is None:
+        status, response = req.next_chunk()
+        if status:
+            print(f"    進捗: {int(status.progress()*100)}%")
+    vid = response['id']
+    youtube.thumbnails().set(videoId=vid,
+        media_body=MediaFileUpload(thumb_path, mimetype='image/png')).execute()
+    return f"https://youtu.be/{vid}"
+
+long_url  = upload('out/video.mp4', 'out/thumbnail.png',
+                   'out/youtube_metadata.txt', config['youtube_category_id'])
+time.sleep(30)
+short_url = upload('out/short.mp4', 'out/short_thumbnail.png',
+                   'out/youtube_metadata_short.txt', config['youtube_category_id'])
+
+return {"name": channel_name, "success": True,
+        "long_url": long_url, "short_url": short_url}
+
+================================================================
+## DARK TALES 専用フェーズ（channel_id == "dark_tales"の時のみ実行）
+================================================================
+
+DARK TALESは解説動画ではなくアニメ化動画のため、
+フェーズ1〜2を以下の専用フェーズに差し替える。
+
+### DARK TALES フェーズ1: ストーリー調達・脚本
+web_searchで以下を調べる:
+- 日本の怖い話・実話怪談で今週話題になっているもの
+- 「〇〇で話題の怖い話」「実話 怪談 最新」
+- 英語圏のr/nosleep・creepypasta等で話題のストーリー（英語版用）
+
+ストーリーを選んだら以下の構造で脚本を書く:
+HOOK（10秒）→ SETUP（30秒）→ ESCALATION（2分）→ CLIMAX（1分）→ AFTERMATH（30秒）
+
+KAGEのナレーションと体験者のセリフを交互に設計する。
+特定個人・実在企業・場所を傷つけないよう脚色する。
+
+### DARK TALES フェーズ2: アニメビジュアル設計
+
+#### シーン別Remotion実装ルール
+
+NARRATION_SCENE:
+- 背景: 真っ暗（#050505）
+- KAGEのシルエット: 中央下部に配置
+- テキスト: Caveatフォントで1文字ずつhandwriting風に表示
+  strokeDashoffset animation で手書き感を演出
+- 効果: 画面端に薄い霧エフェクト（radial-gradient）
+
+STORY_SCENE（話の再現）:
+- 背景: CSS filter: sepia(0.3) brightness(0.4) で暗く
+- キャラクターシルエット: 単色塗りつぶし
+  通常: #1a1a1a / 体験者: #2d2d2d
+- カメラ: interpolateでゆっくりズームイン（scale 1.0→1.08 / 200f）
+- 環境: 窓・廊下・森などをSVGで描画
+
+FLASHBACK_SCENE:
+- 全体に filter: sepia(0.8) contrast(1.2) を適用
+- ノイズエフェクト: Math.random()をframeでseedして
+  半透明の白ドットをランダム配置
+- テキストが震える: translateX(Math.sin(frame*0.5)*2)
+
+CLIMAX_SCENE:
+- フラッシュ: interpolate(frame, [0,3,6,9], [0,1,0,0]) でopacity点滅
+- 画面シェイク: translateX(Math.sin(frame*2)*5)
+- 血の赤（#dc2626）が画面端から広がる: radial-gradient animation
+- テキストが大きく・赤く表示
+
+AFTERMATH_SCENE:
+- 静寂に戻る。BGMがフェードアウト
+- KAGEが「では、また次の話で」と言って暗転
+- 暗転しながら次回予告テキストが浮かぶ
+
+#### グリッチエフェクト（全シーン共通・確率で発生）
+const glitch = Math.sin(frame * 7.3) > 0.95;
+if (glitch) {
+  // RGB分離: 赤チャンネルをx方向に2pxずらす
+  filter: `drop-shadow(2px 0 0 red) drop-shadow(-2px 0 0 cyan)`
+}
+
+### DARK TALES フェーズ2b: SE（効果音）配置
+以下のフリー効果音をsrc/audio/se/に配置するよう案内する:
+- heartbeat.mp3（緊張シーン用）
+- door_creak.mp3（扉が開く音）
+- static.mp3（グリッチ時のノイズ）
+- scream_short.mp3（クライマックス用）
+※ freesound.org または pixabay.com から無料素材を取得
+
+BGMはフリーのダークアンビエント音源を使用:
+src/audio/bgm_dark.mp3 として配置
+
+================================================================
+## 英語ファースト生成方針（全チャンネル共通）
+================================================================
+
+本システムは最初から英語で脚本を生成する。翻訳は使わない。
+英語ネイティブが自然に話す口語表現で書く。
+キャラクターの口調・個性は維持する。
+
+### 英語ボイス（全チャンネル共通）
+MAIN: en-US-GuyNeural
+SUB: en-US-AriaNeural
+
+### フォント
+英語版では Noto Sans JP の代わりに Inter を使用する。
+heading/monoフォントはconfigのまま使用。
+
+### メタデータ
+タイトル・説明文・タグ・フッターすべて英語で生成する。
+channel_footer_en がconfigにない場合は channel_footer を英訳して使う。
+
+================================================================
+## 初回セットアップ手順（一度だけ手動で行うこと）
+================================================================
+
+1. Google Cloud Console でプロジェクト作成
+2. YouTube Data API v3 を有効化
+3. OAuth2クライアントIDを20個作成（日本語10ch + 英語10ch）
+4. 各JSONを以下の名前で配置:
+   日本語版: credentials/{channel_id}_credentials.json
+   英語版:   credentials/{channel_id}_en_credentials.json
+5. 全チャンネルの認証を実行:
+   python scripts/auth.py --channel agent_zero
+   python scripts/auth.py --channel agent_zero_en
+   ... （20チャンネル分）
+6. 以降は完全自動
+
+================================================================
+## FACTORY実行コマンド
+================================================================
+
+# 全チャンネル一括実行（日本語 + 英語）
+python engine/factory.py
+
+# 日本語のみ
+python engine/factory.py --lang ja
+
+# 英語のみ
+python engine/factory.py --lang en
+
+# 特定チャンネルのみ
+python engine/factory.py --channel agent_zero
+
+================================================================
+## 完了レポート形式
+================================================================
+
+========== CHANNEL FACTORY 完了レポート ==========
+実行日時: YYYY-MM-DD HH:MM
+
+🇯🇵 日本語版
+✅ AGENT ZERO       長尺: youtu.be/xxx  ショート: youtu.be/xxx
+✅ GOLD DATA LAB    長尺: youtu.be/xxx  ショート: youtu.be/xxx
+✅ MYTH BREAKER     長尺: youtu.be/xxx  ショート: youtu.be/xxx
+✅ MONEY LAB        長尺: youtu.be/xxx  ショート: youtu.be/xxx
+✅ BEAUTY LAB       長尺: youtu.be/xxx  ショート: youtu.be/xxx
+✅ HISTORY CRASH    長尺: youtu.be/xxx  ショート: youtu.be/xxx
+✅ BODY LAB         長尺: youtu.be/xxx  ショート: youtu.be/xxx
+✅ CRYPTO SIGNAL    長尺: youtu.be/xxx  ショート: youtu.be/xxx
+✅ WORK HACK        長尺: youtu.be/xxx  ショート: youtu.be/xxx
+✅ DARK TALES       長尺: youtu.be/xxx  ショート: youtu.be/xxx
+
+🌍 英語版
+✅ AGENT ZERO EN    長尺: youtu.be/xxx  ショート: youtu.be/xxx
+... （全10チャンネル）
+
+合計投稿数: 長尺20本・ショート20本 = 40本
+総労働時間: 0秒
+==================================================

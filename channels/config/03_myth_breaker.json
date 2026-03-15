@@ -1,0 +1,49 @@
+{
+  "id": "myth_breaker",
+  "name": "MYTH BREAKER",
+  "genre": "科学・雑学・都市伝説検証",
+  "concept": "「常識」「通説」「都市伝説」を科学的データで検証して壊す",
+  "target": "雑学・科学に興味がある10〜40代の幅広い層",
+  "format": "検証・論破・驚き系",
+  "video_length_min": 3,
+  "video_length_max": 5,
+  "has_short": true,
+  "colors": {
+    "background": "#0c0a1a",
+    "surface": "#13112a",
+    "primary": "#ff6b35",
+    "secondary": "#ffd700",
+    "text": "#f5f0ff",
+    "muted": "#7a7090"
+  },
+  "fonts": {
+    "heading": "Bebas Neue",
+    "mono": "JetBrains Mono",
+    "japanese": "Noto Sans JP"
+  },
+  "characters": {
+    "main": {
+      "name": "MYTH",
+      "role": "懐疑的な科学者。全ての通説を疑う",
+      "tone": "冷静・論理的・少し意地悪",
+      "edge_tts_voice_ja": "ja-JP-KeitaNeural"
+    },
+    "sub": {
+      "name": "BELI",
+      "role": "なんでも信じてしまう一般人の代弁者",
+      "tone": "驚き・共感・素直",
+      "edge_tts_voice_ja": "ja-JP-NanamiNeural"
+    }
+  },
+  "script_structure": "HOOK→CONFLICT→INVESTIGATION→TWIST→RESOLUTION",
+  "hook_pattern": "「〇〇って本当？」という問いから始まり、科学的に検証",
+  "twist_requirement": "通説・常識が覆える結果が必須",
+  "search_keywords": [
+    "雑学",
+    "都市伝説 検証",
+    "科学 面白い",
+    "常識 嘘"
+  ],
+  "youtube_category_id": "27",
+  "channel_footer": "▼ MYTH BREAKER\n常識・通説・都市伝説を科学で検証するチャンネル\nMYTH と BELI が毎週検証 | チャンネル登録お願いします"
+}

@@ -1,0 +1,49 @@
+{
+  "id": "work_hack",
+  "name": "WORK HACK",
+  "genre": "仕事術・生産性・キャリア",
+  "concept": "「仕事の常識」「成功法則」を実データと研究で検証。本当に効く仕事術だけを語る",
+  "target": "仕事の効率化・キャリアに悩む20〜40代のビジネスマン",
+  "format": "研究データ検証・仕事術実験",
+  "video_length_min": 3,
+  "video_length_max": 5,
+  "has_short": true,
+  "colors": {
+    "background": "#08090f",
+    "surface": "#10121e",
+    "primary": "#60a5fa",
+    "secondary": "#93c5fd",
+    "text": "#eff6ff",
+    "muted": "#4a5580"
+  },
+  "fonts": {
+    "heading": "DM Sans",
+    "mono": "DM Mono",
+    "japanese": "Noto Sans JP"
+  },
+  "characters": {
+    "main": {
+      "name": "PRO",
+      "role": "生産性研究者。エビデンスベースで仕事術を語る",
+      "tone": "論理的・具体的・シンプル",
+      "edge_tts_voice_ja": "ja-JP-KeitaNeural"
+    },
+    "sub": {
+      "name": "WORKER",
+      "role": "残業続きの普通のサラリーマンの代弁者",
+      "tone": "疲れ気味・共感・希望を求める",
+      "edge_tts_voice_ja": "ja-JP-NanamiNeural"
+    }
+  },
+  "script_structure": "HOOK→CONFLICT→INVESTIGATION→TWIST→RESOLUTION",
+  "hook_pattern": "「〇〇すれば仕事が効率化できる」という通説を研究データで検証",
+  "twist_requirement": "仕事術・成功法則の常識が研究で覆る展開が必須",
+  "search_keywords": [
+    "仕事術 効果",
+    "生産性 データ",
+    "残業 減らす",
+    "集中力 科学"
+  ],
+  "youtube_category_id": "22",
+  "channel_footer": "▼ WORK HACK\n仕事の常識をデータで検証するチャンネル\nPRO と WORKER が毎週検証 | チャンネル登録お願いします"
+}

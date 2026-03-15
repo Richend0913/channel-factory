@@ -1,0 +1,52 @@
+{
+  "id": "crypto_signal",
+  "name": "CRYPTO SIGNAL",
+  "genre": "暗号通貨・ビットコイン データ分析",
+  "concept": "BTCを中心に暗号通貨の価格データを検証。感情論なし・オンチェーンデータで語る",
+  "target": "暗号通貨・ビットコインに興味がある20〜40代",
+  "format": "オンチェーンデータ検証・価格分析",
+  "video_length_min": 3,
+  "video_length_max": 5,
+  "has_short": true,
+  "colors": {
+    "background": "#080810",
+    "surface": "#0f0f1e",
+    "primary": "#f7931a",
+    "secondary": "#627eea",
+    "bull": "#26a65b",
+    "bear": "#e74c3c",
+    "text": "#f0f0ff",
+    "muted": "#5a5a80"
+  },
+  "fonts": {
+    "heading": "Space Grotesk",
+    "mono": "JetBrains Mono",
+    "japanese": "Noto Sans JP"
+  },
+  "characters": {
+    "main": {
+      "name": "CHAIN",
+      "role": "オンチェーンデータアナリスト。数字しか信じない",
+      "tone": "冷静・データ断言・感情ゼロ",
+      "edge_tts_voice_ja": "ja-JP-KeitaNeural"
+    },
+    "sub": {
+      "name": "DEGEN",
+      "role": "感情でトレードするクリプト民の代弁者",
+      "tone": "熱狂的・FOMO・素直",
+      "edge_tts_voice_ja": "ja-JP-NanamiNeural"
+    }
+  },
+  "script_structure": "HOOK→CONFLICT→INVESTIGATION→TWIST→RESOLUTION",
+  "hook_pattern": "クリプト界隈の常識・SNSで言われていることをオンチェーンデータで検証",
+  "twist_requirement": "感情論・SNS情報とデータが乖離する結果が必須",
+  "search_keywords": [
+    "ビットコイン データ",
+    "BTC 分析",
+    "暗号通貨 検証",
+    "オンチェーン"
+  ],
+  "youtube_category_id": "22",
+  "disclaimer": "本動画は情報提供目的です。投資を推奨するものではありません。",
+  "channel_footer": "▼ CRYPTO SIGNAL\n暗号通貨の常識をオンチェーンデータで検証するチャンネル\nCHAIN と DEGEN が毎週検証 | チャンネル登録お願いします\n※投資推奨ではありません"
+}

@@ -1,0 +1,42 @@
+[Title]
+"AI Makes You Faster" Is Statistically a Lie — Exposed by 8 Studies
+
+[Description]
+AI boosts productivity. Everyone believes it.
+But the data tells the exact opposite story.
+
+METR's experiment: Senior devs using AI were 19% SLOWER.
+And they thought they were 24% faster. A 43-point perception gap.
+
+In this video, we expose the full picture of the AI Productivity Paradox
+using 8 real research studies that nobody's talking about.
+
+📊 Data covered in this video:
+• METR 2025: AI usage slowed work by 19%, perception gap of 43pts
+• GitHub Research: Copilot writes 46% of code → only 3.6% quality gain
+• PwC 2026 (95 countries, 4,454 CEOs): 56% report ZERO AI ROI
+• NBER: 89% of managers report no productivity change
+• Workday 2026: 40% of "saved" time lost to verification
+• Fortune 2026: Email time DOUBLED after AI adoption
+• BCG x Harvard (1,488 people): 4+ AI tools → "Brain Fry" → 39% more errors
+• Klarna: Replaced 700 staff with AI → satisfaction down 22% → rehired humans
+• Forrester: 55% of companies that replaced workers with AI regret it
+• BCG: Only 5% of companies succeed with AI — they all use selective deployment
+
+📖 Sources:
+METR Experienced Developer Study (2025)
+PwC Global CEO Survey (2026)
+BCG x Harvard Business Review "AI Brain Fry" (2026)
+Workday Productivity Research (2026)
+Fortune "AI Isn't Reducing Workloads" (March 2026)
+NBER Working Paper (2025)
+Veracode GenAI Code Security Report (2025)
+Forrester/Orgvue AI Layoff Report (2025)
+GitHub Copilot Productivity Research
+
+▼ AGENT ZERO
+Trying to make AI do the work — and documenting what actually happens.
+ZERO and NOVA test AI claims with data every week | Subscribe for more
+
+[Tags]
+#AIProductivityParadox #AIAutomation #METRStudy #AIBrainFry #KlarnaCase #Copilot #AIInvestment #AIFails #DataDriven #BCG #PwC #AIAgents #Productivity #AGENTZERO #AIMyths

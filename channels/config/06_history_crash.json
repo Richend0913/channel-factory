@@ -1,0 +1,49 @@
+{
+  "id": "history_crash",
+  "name": "HISTORY CRASH",
+  "genre": "歴史・偉人解説",
+  "concept": "教科書では教えてくれない歴史の「裏側」と「本当のところ」を語る",
+  "target": "歴史好き・教養に興味がある20〜50代",
+  "format": "歴史解説・裏話系",
+  "video_length_min": 4,
+  "video_length_max": 8,
+  "has_short": true,
+  "colors": {
+    "background": "#120a04",
+    "surface": "#1e1208",
+    "primary": "#d4a84b",
+    "secondary": "#8b6914",
+    "text": "#f5e6c8",
+    "muted": "#8a7355"
+  },
+  "fonts": {
+    "heading": "Playfair Display",
+    "mono": "DM Mono",
+    "japanese": "Noto Serif JP"
+  },
+  "characters": {
+    "main": {
+      "name": "KRON",
+      "role": "時代を超えて歴史を見てきた語り部",
+      "tone": "重厚・知的・ドラマチック",
+      "edge_tts_voice_ja": "ja-JP-KeitaNeural"
+    },
+    "sub": {
+      "name": "NAVI",
+      "role": "歴史初心者。素朴な疑問を投げかける",
+      "tone": "素直・驚き・興味津々",
+      "edge_tts_voice_ja": "ja-JP-NanamiNeural"
+    }
+  },
+  "script_structure": "HOOK→CONFLICT→INVESTIGATION→TWIST→RESOLUTION",
+  "hook_pattern": "有名な歴史的事実の「意外な裏側」から始まる",
+  "twist_requirement": "教科書と異なる視点・隠れた事実が必須",
+  "search_keywords": [
+    "歴史 面白い",
+    "偉人 裏話",
+    "日本史 謎",
+    "世界史 真実"
+  ],
+  "youtube_category_id": "27",
+  "channel_footer": "▼ HISTORY CRASH\n教科書では教えてくれない歴史の裏側を語るチャンネル\nKRON と NAVI が毎週解説 | チャンネル登録お願いします"
+}

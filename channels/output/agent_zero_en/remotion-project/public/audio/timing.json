@@ -1,0 +1,290 @@
+[
+  {
+    "scene": "HookScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "NOVA",
+    "text": "AI's supposed to make work faster, right?",
+    "audioOffsetSec": 0.0,
+    "durationSec": 3.072
+  },
+  {
+    "scene": "HookScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "ZERO",
+    "text": "METR ran a controlled trial in 2025. Sixteen senior developers used AI tools. They got nineteen percent slower.",
+    "audioOffsetSec": 3.222,
+    "durationSec": 8.952
+  },
+  {
+    "scene": "HookScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "NOVA",
+    "text": "Wait—slower? Not faster?",
+    "audioOffsetSec": 12.324,
+    "durationSec": 3.312
+  },
+  {
+    "scene": "HookScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "ZERO",
+    "text": "And here's the kicker. They thought they were twenty-four percent faster. The gap between perception and reality? Forty-three points. This is the AI productivity paradox.",
+    "audioOffsetSec": 15.786,
+    "durationSec": 12.12
+  },
+  {
+    "scene": "ConflictScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "NOVA",
+    "text": "Hold on though. Copilot's already writing forty-six percent of code. Sixty-one percent for Java.",
+    "audioOffsetSec": 28.056,
+    "durationSec": 7.392
+  },
+  {
+    "scene": "ConflictScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "ZERO",
+    "text": "It is. And GitHub's own research shows code quality improved by three point six percent. Forty-six percent written, three point six percent better. Something doesn't add up.",
+    "audioOffsetSec": 35.598,
+    "durationSec": 11.256
+  },
+  {
+    "scene": "ConflictScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "NOVA",
+    "text": "Okay that's a terrible ratio. What about at the company level?",
+    "audioOffsetSec": 47.004,
+    "durationSec": 4.608
+  },
+  {
+    "scene": "ConflictScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "ZERO",
+    "text": "PwC surveyed forty-four hundred CEOs across ninety-five countries. Fifty-six percent said AI investment delivered zero returns. And an NBER study found eighty-nine percent of managers reported no productivity change.",
+    "audioOffsetSec": 51.762,
+    "durationSec": 13.32
+  },
+  {
+    "scene": "ConflictScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "NOVA",
+    "text": "More than half of CEOs got nothing? Eighty-nine percent of managers? Why is this happening?",
+    "audioOffsetSec": 65.232,
+    "durationSec": 6.696
+  },
+  {
+    "scene": "InvestigationScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "ZERO",
+    "text": "Reason one. Workday's 2026 study. Forty percent of the time you supposedly saved with AI gets eaten up by checking and fixing its output. Save an hour, spend twenty-four minutes reviewing.",
+    "audioOffsetSec": 72.078,
+    "durationSec": 12.48
+  },
+  {
+    "scene": "InvestigationScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "NOVA",
+    "text": "So you just feel like you saved time but you didn't?",
+    "audioOffsetSec": 84.708,
+    "durationSec": 3.216
+  },
+  {
+    "scene": "InvestigationScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "ZERO",
+    "text": "It gets worse. Fortune reported in March 2026 that after AI adoption, time spent on email doubled. Deep focus work dropped nine percent. You're not getting faster. You're drowning in more busywork.",
+    "audioOffsetSec": 88.074,
+    "durationSec": 13.848
+  },
+  {
+    "scene": "InvestigationScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "NOVA",
+    "text": "Email doubled? How?",
+    "audioOffsetSec": 102.072,
+    "durationSec": 2.832
+  },
+  {
+    "scene": "InvestigationScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "ZERO",
+    "text": "Because AI makes it trivially easy to write emails. So everyone sends more. The recipient's workload explodes. You're not saving time. You're shifting it from the sender to everyone else.",
+    "audioOffsetSec": 105.054,
+    "durationSec": 12.648
+  },
+  {
+    "scene": "InvestigationScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "NOVA",
+    "text": "Oh god. So the sender feels productive while the reader is drowning.",
+    "audioOffsetSec": 117.852,
+    "durationSec": 4.752
+  },
+  {
+    "scene": "InvestigationScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "ZERO",
+    "text": "Reason two. BCG and Harvard studied fourteen hundred people. When you use four or more AI tools, your brain overloads. They're calling it AI brain fry. Major errors up thirty-nine percent. Decision fatigue up thirty-three percent.",
+    "audioOffsetSec": 122.754,
+    "durationSec": 15.96
+  },
+  {
+    "scene": "InvestigationScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "NOVA",
+    "text": "So more tools actually makes you worse?",
+    "audioOffsetSec": 138.864,
+    "durationSec": 2.832
+  },
+  {
+    "scene": "InvestigationScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "ZERO",
+    "text": "Three tools or fewer, you see benefits. Four or more, it collapses. And here's the scary part—an MDPI study found a negative correlation between AI usage and critical thinking. Your brain starts outsourcing the thinking itself.",
+    "audioOffsetSec": 141.846,
+    "durationSec": 14.136
+  },
+  {
+    "scene": "TwistScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "NOVA",
+    "text": "Okay the data is clear. But what happened to companies that actually went all-in on AI?",
+    "audioOffsetSec": 156.132,
+    "durationSec": 5.712
+  },
+  {
+    "scene": "TwistScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "ZERO",
+    "text": "Klarna. In 2024 they replaced seven hundred customer support agents with AI. The CEO bragged about it on stage. Stock went up.",
+    "audioOffsetSec": 161.994,
+    "durationSec": 10.272
+  },
+  {
+    "scene": "TwistScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "NOVA",
+    "text": "Sounds like a win?",
+    "audioOffsetSec": 172.416,
+    "durationSec": 1.752
+  },
+  {
+    "scene": "TwistScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "ZERO",
+    "text": "Six months later, customer satisfaction dropped twenty-two percent. The AI couldn't handle edge cases. Engineers were pulled off their actual jobs to answer support phones. The CEO publicly admitted failure and started rehiring humans.",
+    "audioOffsetSec": 174.318,
+    "durationSec": 14.784
+  },
+  {
+    "scene": "TwistScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "NOVA",
+    "text": "They fired seven hundred people, made engineers answer phones, and then hired them back?",
+    "audioOffsetSec": 189.252,
+    "durationSec": 5.256
+  },
+  {
+    "scene": "TwistScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "ZERO",
+    "text": "His exact words: we focused too much on cost, and quality suffered. And it's not just Klarna. Forrester found fifty-five percent of companies that replaced workers with AI now regret it. Gartner predicts half will rehire by 2027.",
+    "audioOffsetSec": 194.658,
+    "durationSec": 14.472
+  },
+  {
+    "scene": "TwistScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "NOVA",
+    "text": "More than half regret it. So is AI completely useless then?",
+    "audioOffsetSec": 209.28,
+    "durationSec": 4.8
+  },
+  {
+    "scene": "TwistScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "ZERO",
+    "text": "No. BCG's data has the answer. Sixty percent of companies get zero value from AI. Only five percent create real value at scale. What sets that five percent apart? They don't spray AI everywhere. They concentrate it on high-cost, high-volume tasks only.",
+    "audioOffsetSec": 214.23,
+    "durationSec": 18.888
+  },
+  {
+    "scene": "ResolutionScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "NOVA",
+    "text": "Selective deployment. So how do you actually get into that top five percent?",
+    "audioOffsetSec": 233.268,
+    "durationSec": 5.28
+  },
+  {
+    "scene": "ResolutionScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "ZERO",
+    "text": "Three rules. One, cap your AI tools at three. Four or more triggers brain fry. Two, don't use AI when the review time exceeds the task time. Email and quick chat replies are the worst offenders. Three, never trust AI output blindly. Forty-five percent of AI-generated code has security flaws.",
+    "audioOffsetSec": 238.698,
+    "durationSec": 20.328
+  },
+  {
+    "scene": "ResolutionScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "NOVA",
+    "text": "So AI is useful, but feeling faster isn't the same as being faster. You have to actually measure your real output.",
+    "audioOffsetSec": 259.176,
+    "durationSec": 7.632
+  },
+  {
+    "scene": "ResolutionScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "ZERO",
+    "text": "The METR study proved it. Perception and reality don't match. Measure with data, not feelings. That alone puts you in the top five percent.",
+    "audioOffsetSec": 266.958,
+    "durationSec": 10.296
+  },
+  {
+    "scene": "OutroScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "NOVA",
+    "text": "Every week on AGENT ZERO, we test what everyone assumes about AI—with actual data. Subscribe and hit the bell so you don't miss the next one.",
+    "audioOffsetSec": 277.404,
+    "durationSec": 8.808
+  },
+  {
+    "scene": "OutroScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "ZERO",
+    "text": "Next time. AI recommends packages that don't exist twenty percent of the time. We're exposing the slopsquatting threat.",
+    "audioOffsetSec": 286.362,
+    "durationSec": 8.088
+  }
+]

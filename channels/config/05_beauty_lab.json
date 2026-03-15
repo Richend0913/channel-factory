@@ -1,0 +1,50 @@
+{
+  "id": "beauty_lab",
+  "name": "BEAUTY LAB",
+  "genre": "美容・スキンケア・コスメ検証",
+  "concept": "「美容の常識」「SNSで話題の方法」を皮膚科学データで検証する。バズり成分・話題コスメの本当のところを語る",
+  "target": "スキンケア・美容に興味がある20〜40代の女性・男性",
+  "format": "科学的検証・成分分析・データ比較",
+  "video_length_min": 3,
+  "video_length_max": 5,
+  "has_short": true,
+  "colors": {
+    "background": "#120810",
+    "surface": "#1e0e1c",
+    "primary": "#f472b6",
+    "secondary": "#e879f9",
+    "accent": "#fde68a",
+    "text": "#fdf2f8",
+    "muted": "#8a5a7a"
+  },
+  "fonts": {
+    "heading": "DM Sans",
+    "mono": "DM Mono",
+    "japanese": "Noto Sans JP"
+  },
+  "characters": {
+    "main": {
+      "name": "DERM",
+      "role": "皮膚科学者。成分と数値しか信じない",
+      "tone": "冷静・科学的・断言調",
+      "edge_tts_voice_ja": "ja-JP-NanamiNeural"
+    },
+    "sub": {
+      "name": "GLOW",
+      "role": "SNSの美容情報を信じてしまう一般人の代弁者",
+      "tone": "キラキラ・共感・驚きやすい",
+      "edge_tts_voice_ja": "ja-JP-NanamiNeural"
+    }
+  },
+  "script_structure": "HOOK→CONFLICT→INVESTIGATION→TWIST→RESOLUTION",
+  "hook_pattern": "「〇〇すれば肌が綺麗になる」というSNSの常識を皮膚科学データで検証",
+  "twist_requirement": "美容SNSの常識・バズり手法が科学データで覆る結果が必須",
+  "search_keywords": [
+    "スキンケア 成分",
+    "美容 嘘",
+    "コスメ 検証",
+    "肌荒れ 原因 データ"
+  ],
+  "youtube_category_id": "22",
+  "channel_footer": "▼ BEAUTY LAB\n美容の常識を皮膚科学で検証するチャンネル\nDERM と GLOW が毎週検証 | チャンネル登録お願いします"
+}

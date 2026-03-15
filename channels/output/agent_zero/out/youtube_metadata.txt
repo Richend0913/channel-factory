@@ -1,0 +1,42 @@
+【タイトル】
+「AIで仕事が速くなる」は統計的に嘘だった【8つの研究で証明】
+
+【説明文】
+AIで生産性が上がる。みんなそう信じてる。
+でもデータは真逆を示していた。
+
+METR社の実験：ベテラン開発者がAIを使ったら19%遅くなった。
+しかも本人は「24%速くなった」と思い込んでいた。
+
+この動画では、誰も教えてくれない
+AI生産性パラドックスの全貌を8つの研究データで暴きます。
+
+📊 この動画で扱うデータ:
+• METR 2025: AI使用で作業速度19%低下、認識ギャップ43pt
+• GitHub Research: Copilotがコード46%記述→品質改善たった3.6%
+• PwC 2026 (95カ国4,454人): CEO 56%がAI投資リターンゼロ
+• NBER: 管理職89%が生産性変化なしと回答
+• Workday 2026: 節約時間の40%が確認作業に消失
+• Fortune 2026: AI導入後メール時間が2倍に増加
+• BCG×Harvard (1,488人): AIツール4つ以上で"Brain Fry"→ミス39%増
+• Klarna事件: 700人AI置換→満足度22%低下→人間再雇用
+• Forrester: AI解雇企業の55%が後悔
+• BCG: 成功企業はたった5%、共通点は「選択的AI導入」
+
+📖 引用元:
+METR Experienced Developer Study (2025)
+PwC Global CEO Survey (2026)
+BCG × Harvard Business Review "AI Brain Fry" (2026)
+Workday Productivity Research (2026)
+Fortune "AI Isn't Reducing Workloads" (March 2026)
+NBER Working Paper (2025)
+Veracode GenAI Code Security Report (2025)
+Forrester/Orgvue AI Layoff Report (2025)
+GitHub Copilot Productivity Research
+
+▼ AGENT ZERO
+AIに仕事をさせようとして、失敗したり驚いたりする記録
+ZERO と NOVA が毎週データで検証 | チャンネル登録お願いします
+
+【ハッシュタグ】
+#AI生産性パラドックス #AI自動化 #METR研究 #AIブレインフライ #Klarna事件 #Copilot #AI投資 #AI失敗 #データで証明 #BCG #PwC #AIエージェント #業務効率化 #AGENTZERO #AI常識崩壊

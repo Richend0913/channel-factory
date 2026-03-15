@@ -1,0 +1,49 @@
+{
+  "id": "money_lab",
+  "name": "MONEY LAB",
+  "genre": "お金・副業・資産形成",
+  "concept": "「お金の常識」をデータと実体験で検証。副業・投資・節約の本当のところを語る",
+  "target": "20〜40代の副業・資産形成に興味がある層",
+  "format": "データ検証・体験談",
+  "video_length_min": 3,
+  "video_length_max": 6,
+  "has_short": true,
+  "colors": {
+    "background": "#071209",
+    "surface": "#0d1f10",
+    "primary": "#00d084",
+    "secondary": "#7effd4",
+    "text": "#e8f5e9",
+    "muted": "#5a7a5e"
+  },
+  "fonts": {
+    "heading": "DM Sans",
+    "mono": "DM Mono",
+    "japanese": "Noto Sans JP"
+  },
+  "characters": {
+    "main": {
+      "name": "RICH",
+      "role": "データで資産形成を語る現役投資家",
+      "tone": "落ち着いた・具体的・数字重視",
+      "edge_tts_voice_ja": "ja-JP-KeitaNeural"
+    },
+    "sub": {
+      "name": "BROKE",
+      "role": "お金に悩む普通のサラリーマンの代弁者",
+      "tone": "共感・不安・素直に学ぶ",
+      "edge_tts_voice_ja": "ja-JP-NanamiNeural"
+    }
+  },
+  "script_structure": "HOOK→CONFLICT→INVESTIGATION→TWIST→RESOLUTION",
+  "hook_pattern": "「〇〇すれば稼げる」という通説をデータで検証",
+  "twist_requirement": "副業・投資の常識が覆るデータが必須",
+  "search_keywords": [
+    "副業 実態",
+    "資産形成 データ",
+    "節約 効果",
+    "投資 初心者"
+  ],
+  "youtube_category_id": "22",
+  "channel_footer": "▼ MONEY LAB\nお金の常識をデータで検証するチャンネル\nRICH と BROKE が毎週検証 | チャンネル登録お願いします"
+}

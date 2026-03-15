@@ -1,0 +1,74 @@
+{
+  "bilingual_mode": true,
+
+  "languages": {
+    "ja": {
+      "name": "日本語版",
+      "voicevox_enabled": true,
+      "target_region": "日本語圏",
+      "output_suffix": "_ja"
+    },
+    "en": {
+      "name": "English版",
+      "voicevox_enabled": false,
+      "tts_engine": "edge-tts",
+      "tts_voice": "en-US-GuyNeural",
+      "target_region": "英語圏（US・UK・AU・CA・IN）",
+      "output_suffix": "_en"
+    }
+  },
+
+  "translation_rules": {
+    "script": "日本語台本を生成後、Claude APIで英語に自然翻訳する",
+    "title": "直訳ではなく英語圏で検索されやすい表現に意訳する",
+    "tags": "英語圏のトレンドワードを別途調査して生成する",
+    "disclaimer": "投資系チャンネルはSEC準拠の英語免責文を使う"
+  },
+
+  "edge_tts_voices": {
+    "male_calm":    "en-US-GuyNeural",
+    "male_excited": "en-US-ChristopherNeural",
+    "female_calm":  "en-US-JennyNeural",
+    "female_bright":"en-US-AriaNeural",
+    "british":      "en-GB-RyanNeural",
+    "narrator":     "en-US-SteffanNeural"
+  },
+
+  "channel_voice_mapping": {
+    "agent_zero":     { "main": "en-US-GuyNeural",         "sub": "en-US-AriaNeural" },
+    "gold_data_lab":  { "main": "en-US-SteffanNeural",     "sub": "en-US-ChristopherNeural" },
+    "myth_breaker":   { "main": "en-US-GuyNeural",         "sub": "en-US-JennyNeural" },
+    "money_lab":      { "main": "en-US-SteffanNeural",     "sub": "en-US-ChristopherNeural" },
+    "beauty_lab":     { "main": "en-US-JennyNeural",       "sub": "en-US-AriaNeural" },
+    "history_crash":  { "main": "en-GB-RyanNeural",        "sub": "en-US-JennyNeural" },
+    "body_lab":       { "main": "en-US-GuyNeural",         "sub": "en-US-ChristopherNeural" },
+    "crypto_signal":  { "main": "en-US-SteffanNeural",     "sub": "en-US-ChristopherNeural" },
+    "work_hack":      { "main": "en-US-GuyNeural",         "sub": "en-US-JennyNeural" },
+    "dark_tales":     { "main": "en-US-SteffanNeural",     "sub": "en-US-GuyNeural" }
+  },
+
+  "en_search_keywords_supplement": {
+    "agent_zero":    ["AI agent tutorial", "Claude AI", "AI automation 2025", "LLM workflow"],
+    "gold_data_lab": ["XAUUSD data analysis", "gold trading strategy", "forex gold backtest"],
+    "myth_breaker":  ["myth busted", "science facts", "debunked", "did you know"],
+    "money_lab":     ["passive income data", "side hustle truth", "investing facts"],
+    "beauty_lab":    ["skincare science", "ingredient check", "dermatology facts"],
+    "history_crash": ["untold history", "historical facts", "history you didn't know"],
+    "body_lab":      ["fitness myths debunked", "workout science", "diet data"],
+    "crypto_signal": ["bitcoin onchain data", "crypto analysis", "BTC truth"],
+    "work_hack":     ["productivity science", "work smarter", "evidence based work"],
+    "dark_tales":    ["true horror story", "scary animated", "real ghost story animation"]
+  },
+
+  "upload_strategy": {
+    "order": "日本語版を先にアップ → 30分後に英語版をアップ",
+    "reason": "同じチャンネルには上げない。言語ごとに別チャンネルを使う",
+    "channel_naming": "{channel_name} EN（英語版チャンネル名）",
+    "credentials_naming": "{channel_id}_en_credentials.json"
+  },
+
+  "font_override_for_en": {
+    "japanese_font_replacement": "Inter",
+    "note": "英語版はNoto Sans JPの代わりにInterを使う"
+  }
+}

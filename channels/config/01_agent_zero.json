@@ -1,0 +1,49 @@
+{
+  "id": "agent_zero",
+  "name": "AGENT ZERO",
+  "genre": "AI・自動化解説",
+  "concept": "AIに仕事をさせようとして、失敗したり驚いたりした話を2人のキャラクターが掛け合いで語る",
+  "target": "AIに興味がある20〜40代のビジネスマン・エンジニア",
+  "format": "掛け合い解説・体験談",
+  "video_length_min": 3,
+  "video_length_max": 5,
+  "has_short": true,
+  "colors": {
+    "background": "#07080f",
+    "surface": "#0f1117",
+    "primary": "#4fffff",
+    "secondary": "#a855f7",
+    "text": "#f0f4ff",
+    "muted": "#6b7a99"
+  },
+  "fonts": {
+    "heading": "Space Grotesk",
+    "mono": "JetBrains Mono",
+    "japanese": "Noto Sans JP"
+  },
+  "characters": {
+    "main": {
+      "name": "ZERO",
+      "role": "冷静な実験者。AIを道具として使い倒す側",
+      "tone": "断言調・短く・皮肉屋",
+      "edge_tts_voice_ja": "ja-JP-KeitaNeural"
+    },
+    "sub": {
+      "name": "NOVA",
+      "role": "視聴者の代弁者。好奇心旺盛で鋭い質問をする",
+      "tone": "疑問形・驚き・共感",
+      "edge_tts_voice_ja": "ja-JP-NanamiNeural"
+    }
+  },
+  "script_structure": "HOOK→CONFLICT→INVESTIGATION→TWIST→RESOLUTION",
+  "hook_pattern": "AIで〇〇しようとしたら、想像と全然違った",
+  "twist_requirement": "「やってみたら意外な結果が出る」展開が必須",
+  "search_keywords": [
+    "AIエージェント",
+    "Claude 使い方",
+    "AI自動化",
+    "LLM活用"
+  ],
+  "youtube_category_id": "22",
+  "channel_footer": "▼ AGENT ZERO\nAIに仕事をさせようとして、失敗したり驚いたりする記録\nZERO と NOVA が毎週検証 | チャンネル登録お願いします"
+}

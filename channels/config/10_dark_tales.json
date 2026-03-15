@@ -1,0 +1,103 @@
+{
+  "id": "dark_tales",
+  "name": "DARK TALES",
+  "genre": "怖い話・不思議な話・実話系アニメ",
+  "concept": "実話怪談・都市伝説・不思議な体験談を2Dアニメーションで映像化する。語り手キャラクターが実話をドラマチックに再現する",
+  "target": "怖い話・ホラー・不思議系コンテンツが好きな10〜40代",
+  "format": "実話アニメ化・ドラマ仕立て",
+  "video_length_min": 4,
+  "video_length_max": 8,
+  "has_short": true,
+  "animation_style": {
+    "description": "Remotionで実装する2Dアニメーション風スタイル",
+    "character_style": "シルエット＋最小限のディテール。影と光で感情を表現",
+    "background_style": "手書き風のラフなストローク。CSS filter: blur + sepia で雰囲気を出す",
+    "camera": "ゆっくりしたズームイン・アウト。パン。視点移動で緊張感を演出",
+    "effects": [
+      "テキストが手書き風にゆっくり表示される（strokeDashoffsetアニメ）",
+      "画面がときどきちらつく（グリッチエフェクト）",
+      "暗闇から徐々に浮かび上がるfadeIn",
+      "効果音タイミングに合わせた画面の微振動（translateX でシェイク）"
+    ]
+  },
+  "colors": {
+    "background": "#050505",
+    "surface": "#0d0d0d",
+    "primary": "#dc2626",
+    "secondary": "#991b1b",
+    "fog": "#1a1a2e",
+    "text": "#e5e5e5",
+    "muted": "#525252",
+    "blood": "#7f1d1d",
+    "ghost": "#94a3b8"
+  },
+  "fonts": {
+    "heading": "Creepster",
+    "body": "Noto Sans JP",
+    "handwriting": "Caveat"
+  },
+  "scene_types": {
+    "NARRATION": "語り手KAGEのアップ。テキストが画面に浮かび上がる",
+    "SCENE": "話の舞台をアニメで再現。キャラクターシルエットが動く",
+    "FLASHBACK": "セピア調・ノイズあり。過去の出来事を再現",
+    "REACTION": "体験者の感情・心理状態をビジュアルで表現",
+    "CLIMAX": "最も怖い瞬間。効果的なフラッシュ・テキスト強調",
+    "AFTERMATH": "出来事の後。余韻を残すエンディング"
+  },
+  "characters": {
+    "main": {
+      "name": "KAGE",
+      "role": "怪談の語り手。闇の中で静かに話す影のような存在",
+      "tone": "ゆっくり・静か・じわじわ怖くなる語り口",
+      "appearance": "フード付き黒いシルエット。目だけが赤く光る",
+      "edge_tts_voice_ja": "ja-JP-KeitaNeural"
+    },
+    "sub": {
+      "name": "体験者（毎回変わる）",
+      "role": "その回の実話の体験者。セリフで当時の状況を語る",
+      "tone": "怯え・混乱・回想調",
+      "appearance": "その話に合わせたシルエットキャラクター",
+      "edge_tts_voice_ja": "ja-JP-NanamiNeural"
+    }
+  },
+  "story_structure": "HOOK→SETUP→ESCALATION→CLIMAX→AFTERMATH",
+  "HOOK": {
+    "duration_frames": "0〜300f（10秒）",
+    "description": "KAGEが静寂の中で一言。最も怖い場面の断片を見せてから始める",
+    "pattern": "「これは、〇〇年に実際にあった話だ」",
+    "visual": "真っ暗な画面にテキストだけ。手書き風に1文字ずつ表示"
+  },
+  "SETUP": {
+    "duration_frames": "300〜1200f（30秒）",
+    "description": "舞台・登場人物・日常の説明。まだ何も起きていない平和な場面",
+    "visual": "普通の生活シーンのアニメ。だが微妙に不穏な要素を混ぜる"
+  },
+  "ESCALATION": {
+    "duration_frames": "1200〜4800f（2分）",
+    "description": "異変が少しずつ積み重なる。視聴者の不安が高まる",
+    "visual": "影が増える。色温度が下がる。動きが遅くなる"
+  },
+  "CLIMAX": {
+    "duration_frames": "4800〜6600f（1分）",
+    "description": "最も怖い瞬間。視聴者が声を出すレベルを目指す",
+    "visual": "フラッシュ・グリッチ・画面シェイク・血の赤"
+  },
+  "AFTERMATH": {
+    "duration_frames": "6600〜末尾",
+    "description": "その後どうなったか。余韻を残して終わる",
+    "visual": "静寂に戻る。KAGEが「では、また次の話で」と言って暗転"
+  },
+  "content_sources": [
+    "実話怪談（体験談として語る形式・特定個人を傷つけない形に脚色）",
+    "都市伝説（「〇〇という話がある」という形式で）",
+    "不思議な話・ゾワっとする話・後味が悪い話"
+  ],
+  "search_keywords": [
+    "怖い話",
+    "実話怪談",
+    "都市伝説 アニメ",
+    "ホラー 実話"
+  ],
+  "youtube_category_id": "24",
+  "channel_footer": "▼ DARK TALES\n実話怪談・都市伝説をアニメ化するチャンネル\nKAGE が毎週語る | チャンネル登録お願いします\n※本動画の一部は実話をもとにしたフィクションです"
+}

@@ -1,0 +1,52 @@
+{
+  "id": "gold_data_lab",
+  "name": "GOLD DATA LAB",
+  "genre": "FX・トレード検証",
+  "concept": "ゴールドトレードの常識をデータで壊していくチャンネル",
+  "target": "FX・ゴールドに興味がある30〜40代",
+  "format": "データ検証・常識vs現実",
+  "video_length_min": 3,
+  "video_length_max": 5,
+  "has_short": true,
+  "colors": {
+    "background": "#0a0c0e",
+    "surface": "#13171c",
+    "primary": "#f5c842",
+    "secondary": "#e8e8e8",
+    "bull": "#26a65b",
+    "bear": "#e74c3c",
+    "text": "#eef0f2",
+    "muted": "#5a6475"
+  },
+  "fonts": {
+    "heading": "DM Sans",
+    "mono": "DM Mono",
+    "japanese": "Noto Sans JP"
+  },
+  "characters": {
+    "main": {
+      "name": "GOLD",
+      "role": "データしか信じない冷静な分析官",
+      "tone": "断言調・感情ゼロ・数字で話す",
+      "edge_tts_voice_ja": "ja-JP-NanamiNeural"
+    },
+    "sub": {
+      "name": "RAY",
+      "role": "感情的なトレーダー。視聴者の思い込みを代弁",
+      "tone": "感情的・直感派・素直に学ぶ",
+      "edge_tts_voice_ja": "ja-JP-KeitaNeural"
+    }
+  },
+  "script_structure": "HOOK→CONFLICT→INVESTIGATION→TWIST→RESOLUTION",
+  "hook_pattern": "トレーダーの常識を1行で提示→データが即座に否定",
+  "twist_requirement": "常識と逆のデータ結果が必須",
+  "search_keywords": [
+    "XAUUSD",
+    "ゴールド 分析",
+    "FX 検証",
+    "金相場 データ"
+  ],
+  "youtube_category_id": "22",
+  "disclaimer": "本動画は情報提供目的です。投資を推奨するものではありません。",
+  "channel_footer": "▼ GOLD DATA LAB\nゴールドトレードの常識をデータで壊していくチャンネル\nGOLD と RAY が毎週検証 | チャンネル登録お願いします\n※投資推奨ではありません"
+}
