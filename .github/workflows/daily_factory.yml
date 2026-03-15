@@ -1,0 +1,103 @@
+name: CHANNEL FACTORY - Daily Auto Post（日本語版・20本/日）
+
+on:
+  schedule:
+    # 毎日朝9時（JST）に実行 → UTCは0時
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: '特定チャンネルのみ実行（空欄=全10チャンネル）'
+        required: false
+        default: ''
+
+jobs:
+  factory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            ffmpeg \
+            chromium-browser \
+            fonts-noto-cjk \
+            fonts-noto-cjk-extra \
+            xvfb
+
+      - name: Install Python packages
+        run: |
+          pip install \
+            edge-tts \
+            pydub \
+            deep-translator \
+            google-api-python-client \
+            google-auth-oauthlib \
+            google-auth-httplib2
+
+      - name: Install Node packages
+        run: npm install
+
+      # 日本語版10チャンネル分のtoken.jsonをSecretから復元
+      - name: Restore YouTube credentials
+        run: |
+          mkdir -p credentials
+          echo "${{ secrets.TOKEN_AGENT_ZERO }}"    | base64 -d > credentials/token_agent_zero.json
+          echo "${{ secrets.TOKEN_GOLD_DATA_LAB }}" | base64 -d > credentials/token_gold_data_lab.json
+          echo "${{ secrets.TOKEN_MYTH_BREAKER }}"  | base64 -d > credentials/token_myth_breaker.json
+          echo "${{ secrets.TOKEN_MONEY_LAB }}"     | base64 -d > credentials/token_money_lab.json
+          echo "${{ secrets.TOKEN_BEAUTY_LAB }}"    | base64 -d > credentials/token_beauty_lab.json
+          echo "${{ secrets.TOKEN_HISTORY_CRASH }}" | base64 -d > credentials/token_history_crash.json
+          echo "${{ secrets.TOKEN_BODY_LAB }}"      | base64 -d > credentials/token_body_lab.json
+          echo "${{ secrets.TOKEN_CRYPTO_SIGNAL }}" | base64 -d > credentials/token_crypto_signal.json
+          echo "${{ secrets.TOKEN_WORK_HACK }}"     | base64 -d > credentials/token_work_hack.json
+          echo "${{ secrets.TOKEN_DARK_TALES }}"    | base64 -d > credentials/token_dark_tales.json
+
+      # 日本語のみ・20本/日で実行
+      - name: Run Channel Factory
+        env:
+          DISPLAY: ':99'
+          CHANNEL: ${{ github.event.inputs.channel }}
+        run: |
+          Xvfb :99 -screen 0 1920x1080x24 &
+          sleep 2
+          if [ -n "$CHANNEL" ]; then
+            python engine/factory.py --channel "$CHANNEL" --lang ja
+          else
+            python engine/factory.py --lang ja
+          fi
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: factory-report-${{ github.run_number }}
+          path: |
+            channels/output/**/out/youtube_metadata.txt
+            factory_report.txt
+          retention-days: 7
+
+      # GitHubのActionsページに結果サマリーを表示
+      - name: Show summary
+        if: always()
+        run: |
+          echo "## 本日の投稿結果（日本語版）" >> $GITHUB_STEP_SUMMARY
+          echo "10チャンネル × 長尺1本 + ショート1本 = **20本投稿**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          cat factory_report.txt >> $GITHUB_STEP_SUMMARY || echo "レポートなし" >> $GITHUB_STEP_SUMMARY
