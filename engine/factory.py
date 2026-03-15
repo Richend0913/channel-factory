@@ -1,0 +1,596 @@
+"""
+CHANNEL FACTORY Engine
+Orchestrates the full video pipeline: research → script → audio → render → metadata → upload
+"""
+
+import argparse
+import asyncio
+import io
+import json
+import os
+import subprocess
+import sys
+import time
+from datetime import datetime
+from pathlib import Path
+
+# Ensure UTF-8 output on Windows
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+CONFIG_DIR = BASE_DIR / "channels" / "config"
+OUTPUT_DIR = BASE_DIR / "channels" / "output"
+CREDENTIALS_DIR = BASE_DIR / "credentials"
+
+VOICE_MAP_EN = {
+    "MAIN": "en-US-GuyNeural",
+    "SUB": "en-US-AriaNeural",
+}
+
+VOICE_MAP_JA = {
+    "MAIN": "ja-JP-KeitaNeural",
+    "SUB": "ja-JP-NanamiNeural",
+}
+
+FPS = 30
+
+
+def load_configs(channel_filter=None):
+    """Load channel configs, optionally filtering to a specific channel."""
+    configs = []
+    for path in sorted(CONFIG_DIR.glob("*.json")):
+        if path.name.startswith("00_"):
+            continue  # skip bilingual config
+        with open(path, encoding="utf-8") as f:
+            ch = json.load(f)
+        if channel_filter and ch["id"] != channel_filter:
+            continue
+        ch["_config_path"] = str(path)
+        configs.append(ch)
+    return configs
+
+
+# ============================================================
+# Phase 0: Trend Research (placeholder — needs web search API)
+# ============================================================
+def phase0_research(ch, out_dir):
+    """Phase 0: Trend research and topic selection."""
+    print(f"  [Phase 0] Trend research for {ch['name']}...")
+    research_file = out_dir / "research.json"
+    if research_file.exists():
+        print(f"    -> research.json already exists, skipping")
+        return True
+
+    # In production, this would call web search APIs and score topics.
+    # For now, generate a placeholder indicating manual research is needed.
+    research = {
+        "status": "pending",
+        "keywords": ch.get("search_keywords", []),
+        "note": "Automated research requires web search API integration. "
+                "Provide a topic manually or run with Claude Code for full research.",
+    }
+    with open(research_file, "w", encoding="utf-8") as f:
+        json.dump(research, f, indent=2, ensure_ascii=False)
+    print(f"    -> research.json created (manual topic selection needed)")
+    return True
+
+
+# ============================================================
+# Phase 1: Script Generation (placeholder — needs LLM API)
+# ============================================================
+def phase1_script(ch, out_dir, lang):
+    """Phase 1: Generate dialogue script."""
+    print(f"  [Phase 1] Script generation ({lang})...")
+    audio_dir = out_dir / "src" / "audio"
+    audio_dir.mkdir(parents=True, exist_ok=True)
+    script_path = audio_dir / "script.json"
+
+    if script_path.exists():
+        with open(script_path, encoding="utf-8") as f:
+            script = json.load(f)
+        print(f"    -> script.json already exists ({len(script)} lines)")
+        return True
+
+    # In production, this calls an LLM to generate the script.
+    print(f"    -> script.json not found. Generate manually or via Claude Code.")
+    return False
+
+
+# ============================================================
+# Phase 2: Visual Design (placeholder — needs LLM for TSX)
+# ============================================================
+def phase2_visuals(ch, out_dir):
+    """Phase 2: Create Remotion project and visual components."""
+    print(f"  [Phase 2] Visual design...")
+    remotion_dir = out_dir / "remotion-project"
+
+    if (remotion_dir / "src" / "MainVideo.tsx").exists():
+        print(f"    -> Remotion project already exists")
+        return True
+
+    print(f"    -> Remotion project not found. Generate manually or via Claude Code.")
+    return False
+
+
+# ============================================================
+# Phase 3: Script to Dialogue (台本ルール enforcement)
+# ============================================================
+def phase3_dialogue(ch, out_dir, lang):
+    """Phase 3: Validate and finalize dialogue script."""
+    print(f"  [Phase 3] Dialogue validation ({lang})...")
+    script_path = out_dir / "src" / "audio" / "script.json"
+
+    if not script_path.exists():
+        print(f"    -> No script.json found, skipping")
+        return False
+
+    with open(script_path, encoding="utf-8") as f:
+        script = json.load(f)
+
+    main_name = ch["characters"]["main"]["name"]
+    sub_name = ch["characters"]["sub"]["name"]
+    scenes = set(item["scene"] for item in script)
+    word_count = sum(len(item["text"].split()) for item in script)
+
+    print(f"    -> {len(script)} lines, {len(scenes)} scenes, ~{word_count} words")
+    print(f"    -> Characters: {main_name} (MAIN), {sub_name} (SUB)")
+    print(f"    -> Scenes: {', '.join(sorted(scenes))}")
+    return True
+
+
+# ============================================================
+# Phase 4: Audio Synthesis (edge-tts)
+# ============================================================
+def phase4_audio(ch, out_dir, lang):
+    """Phase 4: Generate narration audio with edge-tts."""
+    print(f"  [Phase 4] Audio synthesis ({lang})...")
+    audio_dir = out_dir / "src" / "audio"
+    script_path = audio_dir / "script.json"
+    timing_path = audio_dir / "timing.json"
+    narration_path = audio_dir / "narration.mp3"
+
+    if not script_path.exists():
+        print(f"    -> No script.json, skipping audio")
+        return False
+
+    if narration_path.exists() and timing_path.exists():
+        print(f"    -> narration.mp3 and timing.json already exist, skipping")
+        return True
+
+    try:
+        import edge_tts
+        from pydub import AudioSegment
+    except ImportError:
+        print(f"    -> Missing dependencies: pip install edge-tts pydub")
+        return False
+
+    voice_map = VOICE_MAP_EN if lang == "en" else VOICE_MAP_JA
+    # Check if channel config has custom voices
+    main_voice = ch["characters"]["main"].get(f"edge_tts_voice_{lang}")
+    sub_voice = ch["characters"]["sub"].get(f"edge_tts_voice_{lang}")
+    if main_voice:
+        voice_map = {"MAIN": main_voice, "SUB": sub_voice or voice_map["SUB"]}
+
+    rate = "+15%" if lang == "en" else "+25%"
+
+    with open(script_path, encoding="utf-8") as f:
+        script = json.load(f)
+
+    async def generate_line(text, voice):
+        communicate = edge_tts.Communicate(text, voice, rate=rate)
+        audio_data = b""
+        async for chunk in communicate.stream():
+            if chunk["type"] == "audio":
+                audio_data += chunk["data"]
+        return audio_data
+
+    segments = []
+    timing = []
+    offset = 0.0
+    silence_gap = 150  # ms between lines
+
+    for i, item in enumerate(script):
+        voice = voice_map[item["speaker"]]
+        print(f"    -> Line {i+1}/{len(script)}: {item['character_name']} ({voice})")
+        audio_bytes = asyncio.run(generate_line(item["text"], voice))
+        audio = AudioSegment.from_file(io.BytesIO(audio_bytes), format="mp3")
+        segments.append(audio)
+        duration_sec = len(audio) / 1000.0
+        timing.append({
+            "scene": item["scene"],
+            "speaker": item["speaker"],
+            "character_name": item["character_name"],
+            "text": item["text"],
+            "audioOffsetSec": round(offset, 3),
+            "durationSec": round(duration_sec, 3),
+        })
+        offset += duration_sec + silence_gap / 1000.0
+        time.sleep(0.2)  # rate limit
+
+    # Combine with silence gaps
+    silence = AudioSegment.silent(duration=silence_gap)
+    combined = segments[0]
+    for s in segments[1:]:
+        combined += silence + s
+    combined.export(str(narration_path), format="mp3")
+
+    with open(timing_path, "w", encoding="utf-8") as f:
+        json.dump(timing, f, ensure_ascii=False, indent=2)
+
+    # Also copy to remotion public dir if it exists
+    remotion_audio_dir = out_dir / "remotion-project" / "public" / "audio"
+    if remotion_audio_dir.exists():
+        import shutil
+        shutil.copy2(str(narration_path), str(remotion_audio_dir / "narration.mp3"))
+        shutil.copy2(str(timing_path), str(remotion_audio_dir / "timing.json"))
+        shutil.copy2(str(script_path), str(remotion_audio_dir / "script.json"))
+        print(f"    -> Copied audio files to remotion-project/public/audio/")
+
+    print(f"    -> Audio complete: {offset:.1f}s total")
+    return True
+
+
+# ============================================================
+# Phase 5: Remotion Render
+# ============================================================
+def phase5_render(ch, out_dir):
+    """Phase 5: Render video with Remotion."""
+    print(f"  [Phase 5] Remotion render...")
+    remotion_dir = out_dir / "remotion-project"
+    out_video = out_dir / "out"
+    out_video.mkdir(parents=True, exist_ok=True)
+    video_path = out_video / "video.mp4"
+
+    if video_path.exists():
+        size_mb = video_path.stat().st_size / (1024 * 1024)
+        print(f"    -> video.mp4 already exists ({size_mb:.1f} MB), skipping")
+        return True
+
+    if not (remotion_dir / "src" / "index.ts").exists():
+        print(f"    -> No Remotion project found, skipping render")
+        return False
+
+    # Install node dependencies if needed
+    if not (remotion_dir / "node_modules").exists():
+        print(f"    -> Installing npm dependencies...")
+        result = subprocess.run(
+            ["npm", "install"],
+            cwd=str(remotion_dir),
+            capture_output=True, text=True, timeout=300,
+        )
+        if result.returncode != 0:
+            print(f"    -> npm install failed: {result.stderr[:200]}")
+            return False
+
+    # Render main video
+    print(f"    -> Rendering MainVideo...")
+    result = subprocess.run(
+        ["npx", "remotion", "render", "src/index.ts", "MainVideo",
+         str(video_path)],
+        cwd=str(remotion_dir),
+        capture_output=True, text=True, timeout=1800,
+    )
+    if result.returncode != 0:
+        print(f"    -> Render failed: {result.stderr[:300]}")
+        return False
+
+    size_mb = video_path.stat().st_size / (1024 * 1024)
+    print(f"    -> Render complete: {size_mb:.1f} MB")
+    return True
+
+
+# ============================================================
+# Phase 6: Metadata Generation
+# ============================================================
+def phase6_metadata(ch, out_dir, lang):
+    """Phase 6: Generate YouTube metadata."""
+    print(f"  [Phase 6] Metadata generation ({lang})...")
+    meta_path = out_dir / "out" / "youtube_metadata.txt"
+
+    if meta_path.exists():
+        print(f"    -> youtube_metadata.txt already exists, skipping")
+        return True
+
+    # In production, this calls an LLM to generate metadata.
+    print(f"    -> youtube_metadata.txt not found. Generate manually or via Claude Code.")
+    return False
+
+
+# ============================================================
+# Phase 7: YouTube Upload
+# ============================================================
+def phase7_upload(ch, out_dir, lang):
+    """Phase 7: Upload to YouTube."""
+    print(f"  [Phase 7] YouTube upload...")
+    channel_id = ch["id"]
+    token_suffix = f"_{channel_id}" if lang == "ja" else f"_{channel_id}_en"
+    token_path = CREDENTIALS_DIR / f"token{token_suffix}.json"
+    video_path = out_dir / "out" / "video.mp4"
+    meta_path = out_dir / "out" / "youtube_metadata.txt"
+
+    if not token_path.exists():
+        print(f"    -> No token found at {token_path}")
+        print(f"       Run: python scripts/auth.py --channel {channel_id}")
+        return False, None
+
+    if not video_path.exists():
+        print(f"    -> No video.mp4 found, skipping upload")
+        return False, None
+
+    if not meta_path.exists():
+        print(f"    -> No youtube_metadata.txt found, skipping upload")
+        return False, None
+
+    try:
+        from google.oauth2.credentials import Credentials
+        from googleapiclient.discovery import build
+        from googleapiclient.http import MediaFileUpload
+    except ImportError:
+        print(f"    -> Missing: pip install google-api-python-client google-auth")
+        return False, None
+
+    # Load token
+    with open(token_path, encoding="utf-8") as f:
+        token_data = json.load(f)
+
+    creds = Credentials(
+        token=token_data["token"],
+        refresh_token=token_data.get("refresh_token"),
+        token_uri=token_data.get("token_uri", "https://oauth2.googleapis.com/token"),
+        client_id=token_data.get("client_id"),
+        client_secret=token_data.get("client_secret"),
+        scopes=token_data.get("scopes"),
+    )
+
+    youtube = build("youtube", "v3", credentials=creds)
+
+    # Parse metadata
+    title, description, tags = parse_metadata(str(meta_path))
+    category_id = ch.get("youtube_category_id", "22")
+
+    print(f"    -> Uploading: {title}")
+    body = {
+        "snippet": {
+            "title": title,
+            "description": description,
+            "tags": tags,
+            "categoryId": category_id,
+        },
+        "status": {
+            "privacyStatus": "public",
+            "selfDeclaredMadeForKids": False,
+        },
+    }
+    media = MediaFileUpload(
+        str(video_path), chunksize=-1, resumable=True, mimetype="video/mp4"
+    )
+    req = youtube.videos().insert(part="snippet,status", body=body, media_body=media)
+    response = None
+    while response is None:
+        status, response = req.next_chunk()
+        if status:
+            print(f"    -> Progress: {int(status.progress() * 100)}%")
+
+    vid = response["id"]
+    url = f"https://youtu.be/{vid}"
+    print(f"    -> Uploaded: {url}")
+
+    # Upload thumbnail if exists
+    thumb_path = out_dir / "out" / "thumbnail.png"
+    if thumb_path.exists():
+        try:
+            youtube.thumbnails().set(
+                videoId=vid,
+                media_body=MediaFileUpload(str(thumb_path), mimetype="image/png"),
+            ).execute()
+            print(f"    -> Thumbnail set")
+        except Exception as e:
+            print(f"    -> Thumbnail failed: {e}")
+
+    return True, url
+
+
+def parse_metadata(filepath):
+    """Parse youtube_metadata.txt into title, description, tags."""
+    with open(filepath, encoding="utf-8") as f:
+        content = f.read()
+
+    sections = {}
+    current_key = None
+    for line in content.splitlines():
+        # Support both 【Title】 and [Title] formats
+        if line.startswith("\u3010") and line.endswith("\u3011"):
+            current_key = line[1:-1]
+            sections[current_key] = []
+        elif line.startswith("[") and line.endswith("]") and len(line) > 2:
+            current_key = line[1:-1]
+            sections[current_key] = []
+        elif current_key:
+            sections[current_key].append(line)
+
+    title = "\n".join(
+        sections.get("Title", sections.get("\u30bf\u30a4\u30c8\u30eb", []))
+    ).strip()
+    description = "\n".join(
+        sections.get("Description", sections.get("\u8aac\u660e\u6587", []))
+    ).strip()
+    tags_raw = "\n".join(
+        sections.get("Tags", sections.get("Hashtags",
+            sections.get("\u30cf\u30c3\u30b7\u30e5\u30bf\u30b0", [])))
+    ).strip()
+    tags = [
+        t.strip().lstrip("#")
+        for t in tags_raw.replace("\n", " ").split()
+        if t.startswith("#")
+    ]
+    return title, description, tags
+
+
+# ============================================================
+# Main Pipeline
+# ============================================================
+def process_channel(ch, lang, skip_upload=False):
+    """Run full pipeline for a single channel."""
+    channel_id = ch["id"]
+    suffix = "" if lang == "ja" else "_en"
+    out_dir = OUTPUT_DIR / f"{channel_id}{suffix}"
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    result = {
+        "name": ch["name"],
+        "channel_id": channel_id,
+        "lang": lang,
+        "success": False,
+        "long_url": None,
+        "short_url": None,
+        "error": None,
+        "phases": {},
+    }
+
+    try:
+        # Phase 0: Research
+        result["phases"]["0_research"] = phase0_research(ch, out_dir)
+
+        # Phase 1: Script
+        result["phases"]["1_script"] = phase1_script(ch, out_dir, lang)
+
+        # Phase 2: Visuals
+        result["phases"]["2_visuals"] = phase2_visuals(ch, out_dir)
+
+        # Phase 3: Dialogue validation
+        result["phases"]["3_dialogue"] = phase3_dialogue(ch, out_dir, lang)
+
+        # Phase 4: Audio
+        result["phases"]["4_audio"] = phase4_audio(ch, out_dir, lang)
+
+        # Phase 5: Render
+        result["phases"]["5_render"] = phase5_render(ch, out_dir)
+
+        # Phase 6: Metadata
+        result["phases"]["6_metadata"] = phase6_metadata(ch, out_dir, lang)
+
+        # Phase 7: Upload
+        if skip_upload:
+            print(f"  [Phase 7] Upload skipped (--no-upload)")
+            result["phases"]["7_upload"] = False
+        else:
+            uploaded, url = phase7_upload(ch, out_dir, lang)
+            result["phases"]["7_upload"] = uploaded
+            if uploaded:
+                result["long_url"] = url
+
+        # Consider success if we at least have a rendered video
+        video_exists = (out_dir / "out" / "video.mp4").exists()
+        result["success"] = video_exists
+
+    except Exception as e:
+        result["error"] = str(e)
+        print(f"  [ERROR] {e}")
+
+    return result
+
+
+def write_report(results, report_path):
+    """Write factory_report.txt summary."""
+    now = datetime.now().strftime("%Y-%m-%d %H:%M")
+    lines = [
+        "========== CHANNEL FACTORY Report ==========",
+        f"Date: {now}",
+        "",
+    ]
+
+    success_count = 0
+    fail_count = 0
+
+    for r in results:
+        lang_flag = "EN" if r["lang"] == "en" else "JA"
+        if r["success"]:
+            status = "OK"
+            success_count += 1
+            detail = ""
+            if r["long_url"]:
+                detail += f"  Long: {r['long_url']}"
+            if r["short_url"]:
+                detail += f"  Short: {r['short_url']}"
+            lines.append(f"[{status}] [{lang_flag}] {r['name']}{detail}")
+        else:
+            status = "FAIL"
+            fail_count += 1
+            error = r.get("error", "incomplete pipeline")
+            lines.append(f"[{status}] [{lang_flag}] {r['name']}  Error: {error}")
+
+        # Phase summary
+        phases = r.get("phases", {})
+        phase_str = "  Phases: " + " ".join(
+            f"{k}={'OK' if v else 'SKIP'}" for k, v in phases.items()
+        )
+        lines.append(phase_str)
+
+    lines.append("")
+    lines.append(f"Total: {success_count} OK, {fail_count} FAIL")
+    lines.append("=" * 50)
+
+    report = "\n".join(lines)
+    with open(report_path, "w", encoding="utf-8") as f:
+        f.write(report)
+    print(f"\nReport saved to: {report_path}")
+    print(report)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="CHANNEL FACTORY Engine")
+    parser.add_argument(
+        "--channel", type=str, default=None,
+        help="Run only this channel ID (e.g. agent_zero)",
+    )
+    parser.add_argument(
+        "--lang", type=str, default="both", choices=["ja", "en", "both"],
+        help="Language: ja, en, or both (default: both)",
+    )
+    parser.add_argument(
+        "--no-upload", action="store_true",
+        help="Skip YouTube upload phase",
+    )
+    args = parser.parse_args()
+
+    print("=" * 60)
+    print("  CHANNEL FACTORY ENGINE")
+    print(f"  Date: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    print(f"  Channel: {args.channel or 'ALL'}")
+    print(f"  Language: {args.lang}")
+    print("=" * 60)
+
+    configs = load_configs(args.channel)
+    if not configs:
+        print(f"No configs found" + (f" for channel '{args.channel}'" if args.channel else ""))
+        sys.exit(1)
+
+    print(f"Loaded {len(configs)} channel config(s)")
+
+    langs = []
+    if args.lang in ("ja", "both"):
+        langs.append("ja")
+    if args.lang in ("en", "both"):
+        langs.append("en")
+
+    results = []
+
+    for ch in configs:
+        for lang in langs:
+            suffix = "" if lang == "ja" else " (EN)"
+            print(f"\n{'=' * 50}")
+            print(f"Processing: {ch['name']}{suffix} ({ch['genre']})")
+            print(f"{'=' * 50}")
+
+            result = process_channel(ch, lang, skip_upload=args.no_upload)
+            results.append(result)
+
+    # Write report
+    report_path = BASE_DIR / "factory_report.txt"
+    write_report(results, str(report_path))
+
+
+if __name__ == "__main__":
+    main()
