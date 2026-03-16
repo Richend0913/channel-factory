@@ -235,24 +235,8 @@ def phase4_audio(ch, out_dir, lang):
 # ============================================================
 # Phase 5: Remotion Render
 # ============================================================
-def phase5_render(ch, out_dir):
-    """Phase 5: Render video with Remotion."""
-    print(f"  [Phase 5] Remotion render...")
-    remotion_dir = out_dir / "remotion-project"
-    out_video = out_dir / "out"
-    out_video.mkdir(parents=True, exist_ok=True)
-    video_path = out_video / "video.mp4"
-
-    if video_path.exists():
-        size_mb = video_path.stat().st_size / (1024 * 1024)
-        print(f"    -> video.mp4 already exists ({size_mb:.1f} MB), skipping")
-        return True
-
-    if not (remotion_dir / "src" / "index.ts").exists():
-        print(f"    -> No Remotion project found, skipping render")
-        return False
-
-    # Install node dependencies if needed
+def _ensure_remotion_deps(remotion_dir):
+    """Install node dependencies if needed. Returns True on success."""
     if not (remotion_dir / "node_modules").exists():
         print(f"    -> Installing npm dependencies...")
         result = subprocess.run(
@@ -263,75 +247,169 @@ def phase5_render(ch, out_dir):
         if result.returncode != 0:
             print(f"    -> npm install failed: {result.stderr[:200]}")
             return False
+    return True
 
-    # Render main video
-    print(f"    -> Rendering MainVideo...")
-    result = subprocess.run(
-        ["npx", "remotion", "render", "src/index.ts", "MainVideo",
-         str(video_path)],
-        cwd=str(remotion_dir),
-        capture_output=True, text=True, timeout=1800,
-    )
-    if result.returncode != 0:
-        print(f"    -> Render failed: {result.stderr[:300]}")
+
+def phase5_render(ch, out_dir):
+    """Phase 5: Render long video and short video with Remotion."""
+    print(f"  [Phase 5] Remotion render...")
+    remotion_dir = out_dir / "remotion-project"
+    out_video = out_dir / "out"
+    out_video.mkdir(parents=True, exist_ok=True)
+    video_path = out_video / "video.mp4"
+    short_path = out_video / "short.mp4"
+
+    if not (remotion_dir / "src" / "index.ts").exists():
+        print(f"    -> No Remotion project found, skipping render")
         return False
 
-    size_mb = video_path.stat().st_size / (1024 * 1024)
-    print(f"    -> Render complete: {size_mb:.1f} MB")
-    return True
+    if not _ensure_remotion_deps(remotion_dir):
+        return False
+
+    # --- Render long video ---
+    if video_path.exists():
+        size_mb = video_path.stat().st_size / (1024 * 1024)
+        print(f"    -> video.mp4 already exists ({size_mb:.1f} MB), skipping")
+    else:
+        print(f"    -> Rendering MainVideo...")
+        result = subprocess.run(
+            ["npx", "remotion", "render", "src/index.ts", "MainVideo",
+             str(video_path)],
+            cwd=str(remotion_dir),
+            capture_output=True, text=True, timeout=1800,
+        )
+        if result.returncode != 0:
+            print(f"    -> Long render failed: {result.stderr[:300]}")
+            return False
+        size_mb = video_path.stat().st_size / (1024 * 1024)
+        print(f"    -> Long video complete: {size_mb:.1f} MB")
+
+    # --- Render short video (YouTubeShort composition) ---
+    if short_path.exists():
+        size_mb = short_path.stat().st_size / (1024 * 1024)
+        print(f"    -> short.mp4 already exists ({size_mb:.1f} MB), skipping")
+    else:
+        # Check if YouTubeShort composition exists in the project
+        index_ts = remotion_dir / "src" / "index.ts"
+        index_content = index_ts.read_text(encoding="utf-8") if index_ts.exists() else ""
+        if "YouTubeShort" not in index_content:
+            print(f"    -> No YouTubeShort composition found, generating short from long video...")
+            # Fallback: extract a 58-second highlight from the long video using ffmpeg
+            _generate_short_from_long(video_path, short_path)
+        else:
+            print(f"    -> Rendering YouTubeShort...")
+            result = subprocess.run(
+                ["npx", "remotion", "render", "src/index.ts", "YouTubeShort",
+                 str(short_path)],
+                cwd=str(remotion_dir),
+                capture_output=True, text=True, timeout=600,
+            )
+            if result.returncode != 0:
+                print(f"    -> Short render failed, falling back to ffmpeg extract...")
+                _generate_short_from_long(video_path, short_path)
+
+        if short_path.exists():
+            size_mb = short_path.stat().st_size / (1024 * 1024)
+            print(f"    -> Short video complete: {size_mb:.1f} MB")
+
+    # --- Generate thumbnail ---
+    thumb_path = out_video / "thumbnail.png"
+    if not thumb_path.exists() and video_path.exists():
+        print(f"    -> Generating thumbnail...")
+        subprocess.run(
+            ["ffmpeg", "-y", "-i", str(video_path), "-ss", "4", "-vframes", "1",
+             str(thumb_path)],
+            capture_output=True, text=True, timeout=30,
+        )
+
+    return video_path.exists()
+
+
+def _generate_short_from_long(long_path, short_path):
+    """Generate a 58s vertical short from the long video using ffmpeg.
+
+    Takes the hook section (first 58 seconds), crops to 9:16 vertical,
+    and adds a slight zoom for visual interest.
+    """
+    if not long_path.exists():
+        print(f"    -> No long video to extract short from")
+        return
+    result = subprocess.run(
+        [
+            "ffmpeg", "-y",
+            "-i", str(long_path),
+            "-t", "58",
+            "-vf", "crop=ih*9/16:ih,scale=1080:1920",
+            "-c:v", "libx264", "-preset", "fast", "-crf", "23",
+            "-c:a", "aac", "-b:a", "128k",
+            str(short_path),
+        ],
+        capture_output=True, text=True, timeout=120,
+    )
+    if result.returncode != 0:
+        print(f"    -> ffmpeg short extraction failed: {result.stderr[:200]}")
 
 
 # ============================================================
 # Phase 6: Metadata Generation
 # ============================================================
 def phase6_metadata(ch, out_dir, lang):
-    """Phase 6: Generate YouTube metadata."""
+    """Phase 6: Generate YouTube metadata (long + short)."""
     print(f"  [Phase 6] Metadata generation ({lang})...")
     meta_path = out_dir / "out" / "youtube_metadata.txt"
+    meta_short_path = out_dir / "out" / "youtube_metadata_short.txt"
 
     if meta_path.exists():
         print(f"    -> youtube_metadata.txt already exists, skipping")
-        return True
+    else:
+        print(f"    -> youtube_metadata.txt not found. Generate manually or via Claude Code.")
+        return False
 
-    # In production, this calls an LLM to generate metadata.
-    print(f"    -> youtube_metadata.txt not found. Generate manually or via Claude Code.")
-    return False
+    # Auto-generate short metadata from long metadata if missing
+    if not meta_short_path.exists() and meta_path.exists():
+        print(f"    -> Generating youtube_metadata_short.txt from long metadata...")
+        title, description, tags = parse_metadata(str(meta_path))
+        short_title = f"#Shorts {title[:60]}" if title else "#Shorts"
+        short_tags = ["Shorts"] + tags[:5]
+        short_meta = (
+            f"[Title]\n{short_title}\n\n"
+            f"[Description]\n{description}\n\n"
+            f"[Tags]\n" + " ".join(f"#{t}" for t in short_tags) + "\n"
+        )
+        with open(meta_short_path, "w", encoding="utf-8") as f:
+            f.write(short_meta)
+        print(f"    -> youtube_metadata_short.txt created")
+    elif meta_short_path.exists():
+        print(f"    -> youtube_metadata_short.txt already exists, skipping")
+
+    return True
 
 
 # ============================================================
 # Phase 7: YouTube Upload
 # ============================================================
-def phase7_upload(ch, out_dir, lang):
-    """Phase 7: Upload to YouTube."""
-    print(f"  [Phase 7] YouTube upload...")
+def _build_youtube_client(ch, lang):
+    """Build authenticated YouTube API client."""
     channel_id = ch["id"]
     token_suffix = f"_{channel_id}" if lang == "ja" else f"_{channel_id}_en"
     token_path = CREDENTIALS_DIR / f"token{token_suffix}.json"
-    video_path = out_dir / "out" / "video.mp4"
-    meta_path = out_dir / "out" / "youtube_metadata.txt"
+
+    # Fallback: try without lang suffix if en token doesn't exist
+    if not token_path.exists() and lang == "en":
+        token_path = CREDENTIALS_DIR / f"token_{channel_id}.json"
 
     if not token_path.exists():
         print(f"    -> No token found at {token_path}")
         print(f"       Run: python scripts/auth.py --channel {channel_id}")
-        return False, None
-
-    if not video_path.exists():
-        print(f"    -> No video.mp4 found, skipping upload")
-        return False, None
-
-    if not meta_path.exists():
-        print(f"    -> No youtube_metadata.txt found, skipping upload")
-        return False, None
+        return None
 
     try:
         from google.oauth2.credentials import Credentials
         from googleapiclient.discovery import build
-        from googleapiclient.http import MediaFileUpload
     except ImportError:
         print(f"    -> Missing: pip install google-api-python-client google-auth")
-        return False, None
+        return None
 
-    # Load token
     with open(token_path, encoding="utf-8") as f:
         token_data = json.load(f)
 
@@ -343,14 +421,24 @@ def phase7_upload(ch, out_dir, lang):
         client_secret=token_data.get("client_secret"),
         scopes=token_data.get("scopes"),
     )
+    return build("youtube", "v3", credentials=creds)
 
-    youtube = build("youtube", "v3", credentials=creds)
 
-    # Parse metadata
+def _upload_video(youtube, video_path, meta_path, thumb_path, category_id, label="video"):
+    """Upload a single video to YouTube. Returns (success, url)."""
+    from googleapiclient.http import MediaFileUpload
+
+    if not video_path.exists():
+        print(f"    -> No {video_path.name} found, skipping {label} upload")
+        return False, None
+
+    if not meta_path.exists():
+        print(f"    -> No {meta_path.name} found, skipping {label} upload")
+        return False, None
+
     title, description, tags = parse_metadata(str(meta_path))
-    category_id = ch.get("youtube_category_id", "22")
+    print(f"    -> Uploading {label}: {title}")
 
-    print(f"    -> Uploading: {title}")
     body = {
         "snippet": {
             "title": title,
@@ -375,21 +463,58 @@ def phase7_upload(ch, out_dir, lang):
 
     vid = response["id"]
     url = f"https://youtu.be/{vid}"
-    print(f"    -> Uploaded: {url}")
+    print(f"    -> Uploaded {label}: {url}")
 
     # Upload thumbnail if exists
-    thumb_path = out_dir / "out" / "thumbnail.png"
-    if thumb_path.exists():
+    if thumb_path and thumb_path.exists():
         try:
             youtube.thumbnails().set(
                 videoId=vid,
                 media_body=MediaFileUpload(str(thumb_path), mimetype="image/png"),
             ).execute()
-            print(f"    -> Thumbnail set")
+            print(f"    -> Thumbnail set for {label}")
         except Exception as e:
-            print(f"    -> Thumbnail failed: {e}")
+            print(f"    -> Thumbnail failed for {label}: {e}")
 
     return True, url
+
+
+def phase7_upload(ch, out_dir, lang):
+    """Phase 7: Upload long video + short video to YouTube."""
+    print(f"  [Phase 7] YouTube upload...")
+
+    youtube = _build_youtube_client(ch, lang)
+    if youtube is None:
+        return False, None, None
+
+    category_id = ch.get("youtube_category_id", "22")
+
+    # Upload long video
+    long_ok, long_url = _upload_video(
+        youtube,
+        out_dir / "out" / "video.mp4",
+        out_dir / "out" / "youtube_metadata.txt",
+        out_dir / "out" / "thumbnail.png",
+        category_id,
+        label="long",
+    )
+
+    # Wait between uploads to avoid rate limits
+    if long_ok:
+        print(f"    -> Waiting 30s before short upload...")
+        time.sleep(30)
+
+    # Upload short video
+    short_ok, short_url = _upload_video(
+        youtube,
+        out_dir / "out" / "short.mp4",
+        out_dir / "out" / "youtube_metadata_short.txt",
+        out_dir / "out" / "short_thumbnail.png",
+        category_id,
+        label="short",
+    )
+
+    return long_ok or short_ok, long_url, short_url
 
 
 def parse_metadata(filepath):
@@ -471,15 +596,17 @@ def process_channel(ch, lang, skip_upload=False):
         # Phase 6: Metadata
         result["phases"]["6_metadata"] = phase6_metadata(ch, out_dir, lang)
 
-        # Phase 7: Upload
+        # Phase 7: Upload (long + short)
         if skip_upload:
             print(f"  [Phase 7] Upload skipped (--no-upload)")
             result["phases"]["7_upload"] = False
         else:
-            uploaded, url = phase7_upload(ch, out_dir, lang)
+            uploaded, long_url, short_url = phase7_upload(ch, out_dir, lang)
             result["phases"]["7_upload"] = uploaded
-            if uploaded:
-                result["long_url"] = url
+            if long_url:
+                result["long_url"] = long_url
+            if short_url:
+                result["short_url"] = short_url
 
         # Consider success if we at least have a rendered video
         video_exists = (out_dir / "out" / "video.mp4").exists()
