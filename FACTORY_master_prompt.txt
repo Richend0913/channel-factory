@@ -71,8 +71,8 @@ for r in results:
 各チャンネルのconfig["search_keywords"]を使って以下を調べる:
 
 ### Step1: web_searchで直近2週間のトレンドを調べる
-- config["search_keywords"]の各ワードで英語検索する
-- 英語圏で今ホットなトピックを特定する
+- config["search_keywords"]の各ワードで検索
+- 日本語圏で今ホットなトピックを特定する
 
 ### Step2: 競合分析
 - そのジャンルのYouTube上位動画を5本調査する
@@ -175,24 +175,19 @@ channels/output/{channel_id}/src/
 2キャラクターのセリフを交互に設計し script.json に保存する。
 
 ### 台本ルール
-- 最初から英語で生成する。翻訳は使わない。
-- 英語ネイティブが自然に話す口語表現で書く。
-- キャラクターの口調・個性は維持する。
-  - main_character: 短く・断言調・データを突きつける（"Here's the thing.", "Look at the data.", "That's the reality."）
-  - sub_character: 疑問形・驚き・共感（"Wait, seriously?", "Hold on—", "That's insane."）
 - main_characterのセリフ: 短く・断言調・最大2文
 - sub_characterのセリフ: 疑問形か驚き・最大2文
 - 1シーンで2〜4往復の掛け合い
-- 全体で800〜1200 words（英語）
+- 全体で1000〜1600文字
 
 ### script.jsonの形式
 [
   {
     "scene": "HookScene",
     "startFrame": 0,
-    "speaker": "MAIN" or "SUB",
+    "speaker": "MAIN" または "SUB",
     "character_name": config["characters"]["main"]["name"],
-    "text": "English dialogue text"
+    "text": "セリフテキスト"
   }
 ]
 
@@ -206,12 +201,19 @@ VOICEVOX不要。edge-tts（完全無料・クラウド対応）で
 
 pip install edge-tts pydub
 
-### 英語ボイス設定（全チャンネル共通）
-VOICE_MAP_EN = {
-    "MAIN": "en-US-GuyNeural",
-    "SUB": "en-US-AriaNeural"
+### 日本語ボイス設定（チャンネルごとに最適なボイスを使用）
+VOICE_MAP_JA = {
+    "agent_zero":    {"MAIN": "ja-JP-KeitaNeural",   "SUB": "ja-JP-NanamiNeural"},
+    "gold_data_lab": {"MAIN": "ja-JP-NanamiNeural",  "SUB": "ja-JP-KeitaNeural"},
+    "myth_breaker":  {"MAIN": "ja-JP-KeitaNeural",   "SUB": "ja-JP-NanamiNeural"},
+    "money_lab":     {"MAIN": "ja-JP-KeitaNeural",   "SUB": "ja-JP-NanamiNeural"},
+    "beauty_lab":    {"MAIN": "ja-JP-NanamiNeural",  "SUB": "ja-JP-NanamiNeural"},
+    "history_crash": {"MAIN": "ja-JP-KeitaNeural",   "SUB": "ja-JP-NanamiNeural"},
+    "body_lab":      {"MAIN": "ja-JP-KeitaNeural",   "SUB": "ja-JP-NanamiNeural"},
+    "crypto_signal": {"MAIN": "ja-JP-KeitaNeural",   "SUB": "ja-JP-NanamiNeural"},
+    "work_hack":     {"MAIN": "ja-JP-KeitaNeural",   "SUB": "ja-JP-NanamiNeural"},
+    "dark_tales":    {"MAIN": "ja-JP-KeitaNeural",   "SUB": "ja-JP-NanamiNeural"},
 }
-# 全チャンネルで同じ英語ボイスを使用する
 
 ### 音声生成スクリプト（日本語・英語共通）
 
@@ -261,11 +263,12 @@ def build_narration(script_path, timing_path, output_path, voice_map):
 
     print(f"音声生成完了: {offset:.1f}秒 → {output_path}")
 
-# 英語版（全チャンネル共通ボイス）
+# 日本語版
+ja_voices = VOICE_MAP_JA[channel_id]
 build_narration("src/audio/script.json",
                 "src/audio/timing.json",
                 "src/audio/narration.mp3",
-                VOICE_MAP_EN)
+                ja_voices)
 
 ================================================================
 ## フェーズ5: Remotion実装・ビルド（チャンネルごと）
@@ -301,21 +304,16 @@ npx remotion still src/index.ts YouTubeShort \
 
 out/youtube_metadata.txt と out/youtube_metadata_short.txt を生成する。
 
-### タイトルルール（英語）
-- 70 characters or fewer
-- Use patterns that perform well in English YouTube:
-  "The Truth About...", "X Was a Lie [Exposed]",
-  "I Tried X. Here's What Happened.", "X% of Y Don't Know This"
-- Include a number or surprising fact
-- Do NOT start with "Explaining..." or "About..."
+### タイトルルール
+- 30文字以内・競合分析結果を反映
+- 「解説します」「について」で始めない
+- 意外な事実・数字・問いかけを入れる
 
 ### 説明文フッター
-config["channel_footer_en"] の内容を必ず使う
-（channel_footer_en が存在しない場合は channel_footer を英語に翻訳して使う）
+config["channel_footer"] の内容を必ず使う
 
-### ハッシュタグ（英語）
+### ハッシュタグ
 長尺15個・ショートは #Shorts を先頭に5個
-すべて英語タグにする
 
 ================================================================
 ## フェーズ7: YouTube自動投稿（チャンネルごと）
@@ -367,18 +365,14 @@ def parse_metadata(filepath):
     sections = {}
     current_key = None
     for line in content.splitlines():
-        # Support both 【Title】 and [Title] formats
-        if (line.startswith('【') and line.endswith('】')):
-            current_key = line[1:-1]
-            sections[current_key] = []
-        elif (line.startswith('[') and line.endswith(']') and len(line) > 2):
+        if line.startswith('【') and line.endswith('】'):
             current_key = line[1:-1]
             sections[current_key] = []
         elif current_key:
             sections[current_key].append(line)
-    title = '\n'.join(sections.get('Title', sections.get('タイトル', []))).strip()
-    description = '\n'.join(sections.get('Description', sections.get('説明文', []))).strip()
-    tags_raw = '\n'.join(sections.get('Hashtags', sections.get('ハッシュタグ', []))).strip()
+    title = '\n'.join(sections.get('タイトル', [])).strip()
+    description = '\n'.join(sections.get('説明文', [])).strip()
+    tags_raw = '\n'.join(sections.get('ハッシュタグ', [])).strip()
     tags = [t.strip().lstrip('#') for t in tags_raw.replace('\n',' ').split() if t.startswith('#')]
     return title, description, tags
 
@@ -484,24 +478,124 @@ BGMはフリーのダークアンビエント音源を使用:
 src/audio/bgm_dark.mp3 として配置
 
 ================================================================
-## 英語ファースト生成方針（全チャンネル共通）
+## バイリンガル対応フェーズ（全チャンネル共通）
 ================================================================
 
-本システムは最初から英語で脚本を生成する。翻訳は使わない。
-英語ネイティブが自然に話す口語表現で書く。
-キャラクターの口調・個性は維持する。
+00_bilingual_config.json を読み込み、
+日本語版の生成完了後に以下を実行する。
 
-### 英語ボイス（全チャンネル共通）
-MAIN: en-US-GuyNeural
-SUB: en-US-AriaNeural
+### 英語版生成の流れ
 
-### フォント
-英語版では Noto Sans JP の代わりに Inter を使用する。
-heading/monoフォントはconfigのまま使用。
+#### Step1: 台本の英語翻訳
+日本語のscript.jsonを読み込み、deep-translatorで英語に翻訳する。
+APIキー不要・完全無料。
 
-### メタデータ
-タイトル・説明文・タグ・フッターすべて英語で生成する。
-channel_footer_en がconfigにない場合は channel_footer を英訳して使う。
+pip install deep-translator
+
+import json, time
+from deep_translator import GoogleTranslator
+
+translator = GoogleTranslator(source='ja', target='en')
+
+with open("src/audio/script.json", encoding='utf-8') as f:
+    ja_script = json.load(f)
+
+en_script = []
+for item in ja_script:
+    translated = translator.translate(item["text"])
+    en_item = item.copy()
+    en_item["text"] = translated
+    en_script.append(en_item)
+    time.sleep(0.3)  # レート制限対策
+
+with open("src/audio/script_en.json", "w", encoding='utf-8') as f:
+    json.dump(en_script, f, ensure_ascii=False, indent=2)
+
+print(f"翻訳完了: {len(en_script)}件")
+
+#### Step2: edge-ttsで英語音声生成
+pip install edge-tts
+
+import asyncio, edge_tts, json
+from pydub import AudioSegment
+import io
+
+with open("src/audio/script_en.json", encoding='utf-8') as f:
+    en_script = json.load(f)
+
+# bilingual_config から voice を取得
+voices = bilingual_config["channel_voice_mapping"][channel_id]
+VOICE_MAP = {"MAIN": voices["main"], "SUB": voices["sub"]}
+
+segments = []
+timing = []
+offset = 0.0
+
+async def generate_audio(text, voice):
+    communicate = edge_tts.Communicate(text, voice)
+    audio_data = b""
+    async for chunk in communicate.stream():
+        if chunk["type"] == "audio":
+            audio_data += chunk["data"]
+    return audio_data
+
+for item in en_script:
+    voice = VOICE_MAP[item["speaker"]]
+    audio_bytes = asyncio.run(generate_audio(item["text"], voice))
+    audio = AudioSegment.from_file(io.BytesIO(audio_bytes), format="mp3")
+    segments.append(audio)
+    duration_sec = len(audio) / 1000.0
+    timing.append({
+        "scene": item["scene"],
+        "startFrame": item["startFrame"],
+        "speaker": item["speaker"],
+        "character_name": item["character_name"],
+        "audioOffsetSec": offset,
+        "durationSec": duration_sec
+    })
+    offset += duration_sec
+
+combined = segments[0]
+for s in segments[1:]:
+    combined += s
+combined.export("src/audio/narration_en.mp3", format="mp3")
+with open("src/audio/timing_en.json", "w") as f:
+    json.dump(timing, f, ensure_ascii=False, indent=2)
+
+#### Step3: 英語版Remotionビルド
+日本語版と同じプロジェクトを使い、
+以下の差分だけ適用して英語版をビルドする:
+- Root.tsxのAudioソースを narration_en.mp3 に変更
+- DialogueBarのtimingDataを timing_en.json に変更
+- フォントの Noto Sans JP を Inter に変更（bilingual_config参照）
+
+npx remotion render src/index.ts MainVideo \
+  --props='{"language":"en"}' \
+  --output=out/video_en.mp4
+
+npx remotion still src/index.ts TitleScene \
+  --props='{"language":"en"}' \
+  --frame=120 --output=out/thumbnail_en.png --width=1280 --height=720
+
+npx remotion render src/index.ts YouTubeShort \
+  --props='{"language":"en"}' \
+  --output=out/short_en.mp4
+
+#### Step4: 英語版メタデータ生成
+out/youtube_metadata_en.txt を生成する。
+
+### 英語版タイトルルール
+- bilingual_config["en_search_keywords_supplement"][channel_id]を参照
+- 英語圏で検索されやすいワードを優先
+- 「常識を覆す」系なら: "The Truth About...", "This Will Change How You..."
+- 「体験談」系なら: "I Tried...", "What Happened When..."
+- 数字を入れる: "3 Reasons Why...", "This Data Changed Everything"
+
+### 英語版投稿
+bilingual_config["upload_strategy"]に従い、
+{channel_id}_en の認証情報を使って英語版チャンネルに投稿する。
+
+pip install edge-tts
 
 ================================================================
 ## 初回セットアップ手順（一度だけ手動で行うこと）
@@ -560,4 +654,1004 @@ python engine/factory.py --channel agent_zero
 
 合計投稿数: 長尺20本・ショート20本 = 40本
 総労働時間: 0秒
+==================================================
+
+================================================================
+## スキル統合レイヤー（全チャンネル共通）
+================================================================
+
+以下のスキルを各フェーズに組み込んで実行する。
+
+================================================================
+### SKILL 1: canvas-design（サムネイル高品質生成）
+================================================================
+
+フェーズ5（サムネイル書き出し）の代わりに以下を実行する。
+
+#### 設計思想
+Remotionの静止画ではなく、canvas-designスキルを使って
+各チャンネルのブランドカラーに最適化された
+クリック率重視のサムネイルを生成する。
+
+#### 実装（Python / Pillowで生成）
+
+pip install Pillow requests
+
+import json
+from PIL import Image, ImageDraw, ImageFont
+import os
+
+def generate_thumbnail(channel_config, title, output_path, is_short=False):
+    """
+    canvas-designの哲学に基づいたサムネイル生成。
+    テキストは最小限・ビジュアルインパクト重視。
+    """
+    w, h = (1280, 720) if not is_short else (1080, 1920)
+    colors = channel_config["colors"]
+
+    img = Image.new('RGB', (w, h), color=colors["background"])
+    draw = ImageDraw.Draw(img)
+
+    # グラデーション背景（上から下へprimaryカラーが滲む）
+    for i in range(h):
+        alpha = int(80 * (1 - i/h))
+        r = int(int(colors["primary"][1:3], 16))
+        g = int(int(colors["primary"][3:5], 16))
+        b = int(int(colors["primary"][5:7], 16))
+        draw.line([(0, i), (w, i)],
+                  fill=(r, g, b, alpha))
+
+    # チャンネルロゴ（左上）
+    draw.rectangle([30, 30, 30+len(channel_config["name"])*14, 65],
+                   fill=colors["primary"])
+
+    # タイトルテキスト（中央・大きく）
+    # フォントはシステムフォントを使用
+    title_lines = [title[i:i+20] for i in range(0, len(title), 20)]
+    y_start = h // 3
+    for line in title_lines[:3]:
+        draw.text((w//2, y_start), line, fill=colors["text"],
+                  anchor="mm")
+        y_start += 80
+
+    # アクセントライン（プライマリカラー）
+    draw.rectangle([0, h-8, w, h], fill=colors["primary"])
+
+    img.save(output_path, 'PNG', quality=95)
+    print(f"サムネイル生成完了: {output_path}")
+
+# 各チャンネルのサムネイル生成
+generate_thumbnail(channel_config, video_title,
+                   "out/thumbnail.png", is_short=False)
+generate_thumbnail(channel_config, video_title,
+                   "out/short_thumbnail.png", is_short=True)
+
+================================================================
+### SKILL 2: algorithmic-art × DARK TALES
+================================================================
+
+channel_id == "dark_tales" の場合のみ実行する。
+
+#### 設計思想
+p5.jsのアルゴリズムアートをDARK TALESの
+各シーンのビジュアルとして自動生成する。
+毎回シード値が変わるため同じ絵が2度と出ない。
+
+#### 実装方針
+各シーンに対応するアルゴリズムアートを生成:
+
+NARRATION_SCENE → "Void Emergence"
+  フィロソフィー: 暗闇から光の粒子が浮かび上がる
+  実装: パーティクルシステム / ノイズフィールド
+  色: #050505背景 / #dc2626赤い粒子
+
+CLIMAX_SCENE → "Blood Fracture"
+  フィロソフィー: 亀裂が広がり赤が滲む
+  実装: フラクタルラインシステム / glitchエフェクト
+  色: #dc2626 / #7f1d1d
+
+AFTERMATH_SCENE → "Dissolving Memory"
+  フィロソフィー: 形が溶けて消えていく
+  実装: パーリンノイズ変形 / フェードアウト粒子
+  色: #94a3b8ゴーストホワイト / 暗闇
+
+#### Remotionへの組み込み
+生成したアルゴリズムアートをHTMLキャンバスとして
+Remotionのシーンに埋め込む:
+
+// DarkScene.tsx
+import { useCurrentFrame } from 'remotion';
+
+export const DarkScene = ({ seed, type }) => {
+  const frame = useCurrentFrame();
+  // p5.jsスケッチをReactコンポーネントとして実装
+  // seedとframeを使ってアニメーション制御
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{ width: '100%', height: '100%' }}
+    />
+  );
+};
+
+================================================================
+### SKILL 3: theme-factory × 10チャンネル
+================================================================
+
+#### 各チャンネルへのテーマ割り当て（変更禁止）
+
+AGENT ZERO     → "Tech Innovation"（Bold・modern tech）
+GOLD DATA LAB  → "Golden Hour"（Rich・warm・premium）
+MYTH BREAKER   → "Midnight Galaxy"（Dramatic・cosmic）
+MONEY LAB      → "Forest Canopy"（Grounded・trustworthy）
+BEAUTY LAB     → "Desert Rose"（Soft・sophisticated）
+HISTORY CRASH  → "Sunset Boulevard"（Warm・dramatic）
+BODY LAB       → "Botanical Garden"（Fresh・organic）
+CRYPTO SIGNAL  → "Arctic Frost"（Cool・precise）
+WORK HACK      → "Modern Minimalist"（Clean・efficient）
+DARK TALES     → "Ocean Depths"（Deep・mysterious）
+
+#### 適用範囲
+各チャンネルのRemotionコンポーネント・サムネイル・
+メタデータのビジュアルトーンに一貫して反映する。
+
+theme-factory のフォントペアリングをtokens.tsに反映:
+- AGENT ZERO: heading="Space Grotesk" body="JetBrains Mono"
+- GOLD DATA LAB: heading="DM Sans" body="DM Mono"
+- DARK TALES: heading="Creepster" body="Caveat"
+（各チャンネルconfig["fonts"]を参照）
+
+================================================================
+### SKILL 4: xlsx（チャンネル管理ダッシュボード）
+================================================================
+
+全チャンネルの投稿・収益状況を管理するExcelファイルを
+毎回の実行完了後に自動更新する。
+
+#### 生成ファイル: channel_dashboard.xlsx
+
+#### シート構成
+
+**Sheet1: 投稿ログ**
+| 日付 | チャンネル | タイトル | 長尺URL | ショートURL | 言語 |
+（実行のたびに追記）
+
+**Sheet2: チャンネル別集計**
+| チャンネル名 | 累計投稿数 | 今月投稿数 | 目標登録者 | 収益化達成日（予測） |
+- 収益化条件: 1000登録者 + 4000時間
+- 予測式: 現在の投稿ペースから逆算
+
+**Sheet3: 収益シミュレーション**
+| チャンネル | 推定月間再生数 | CPM($) | 推定月収($) | 推定月収(円) |
+- CPM: ジャンル別に設定（金融$15 / AI$8 / エンタメ$3 等）
+- 為替: その日のレートをweb_searchで取得して反映
+
+#### 実装
+
+pip install openpyxl
+
+import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.utils import get_column_letter
+import json
+from datetime import datetime
+
+def update_dashboard(factory_results):
+    """
+    factory_report.txtの結果をExcelダッシュボードに反映する
+    """
+    dashboard_path = "channel_dashboard.xlsx"
+
+    # 既存ファイルがあれば読み込み、なければ新規作成
+    try:
+        wb = openpyxl.load_workbook(dashboard_path)
+    except FileNotFoundError:
+        wb = openpyxl.Workbook()
+        setup_dashboard(wb)
+
+    # 投稿ログシートに追記
+    log_sheet = wb["投稿ログ"]
+    for result in factory_results:
+        if result["success"]:
+            log_sheet.append([
+                datetime.now().strftime("%Y-%m-%d"),
+                result["name"],
+                result["title"],
+                result["long_url"],
+                result["short_url"],
+                result["lang"]
+            ])
+
+    # 集計シートを更新
+    update_summary(wb, factory_results)
+
+    wb.save(dashboard_path)
+    print(f"ダッシュボード更新完了: {dashboard_path}")
+
+================================================================
+### SKILL 5: mcp-builder（YouTube Analytics MCPサーバー）
+================================================================
+
+#### 目的
+YouTube Analytics APIをMCPサーバーとして実装し、
+Claude Codeがチャンネルデータを直接読めるようにする。
+これにより「再生数が低いチャンネルのジャンルを自動調整」
+「伸びている動画のパターンを分析して次の企画に反映」
+という完全な改善ループが実現する。
+
+#### 実装ファイル: mcp/youtube_analytics_server.py
+
+pip install fastmcp google-api-python-client
+
+from fastmcp import FastMCP
+import json
+import pickle
+from googleapiclient.discovery import build
+
+mcp = FastMCP("YouTube Analytics MCP")
+
+@mcp.tool()
+def get_channel_stats(channel_id: str) -> dict:
+    """チャンネルの基本統計を取得する"""
+    with open(f'credentials/token_{channel_id}.json', 'rb') as f:
+        creds = pickle.load(f)
+    youtube = build('youtubeAnalytics', 'v2', credentials=creds)
+    # 登録者数・総再生数・推定収益を取得
+    ...
+
+@mcp.tool()
+def get_top_videos(channel_id: str, limit: int = 10) -> list:
+    """再生数上位の動画を取得する"""
+    ...
+
+@mcp.tool()
+def get_traffic_sources(channel_id: str) -> dict:
+    """トラフィックソース（検索・おすすめ・外部）の割合を取得"""
+    ...
+
+@mcp.tool()
+def get_audience_retention(video_id: str) -> dict:
+    """動画の視聴者維持率を取得する"""
+    ...
+
+@mcp.tool()
+def compare_channels() -> list:
+    """全10チャンネルのパフォーマンスを比較する"""
+    ...
+
+if __name__ == "__main__":
+    mcp.run()
+
+#### FACTORYへの組み込み
+毎回の実行前にMCPサーバーからデータを取得し、
+フェーズ0のトレンドリサーチに反映する:
+
+- 先週再生数が低かったチャンネル → テーマを大胆に変える
+- 先週再生数が高かった動画 → 同じパターンで続ける
+- 視聴者維持率が低いチャンネル → 脚本の冒頭を強化する
+
+================================================================
+## スキル統合後の実行フロー
+================================================================
+
+python engine/factory.py --lang en --channel agent_zero
+
+  ↓ フェーズ0: トレンドリサーチ
+    + MCP: 先週の再生数データを取得して企画に反映
+
+  ↓ フェーズ1〜4: 脚本・音声生成（既存）
+
+  ↓ フェーズ5: Remotion実装
+    + algorithmic-art: DARK TALESはアルゴリズムアート挿入
+    + theme-factory: チャンネル別テーマを適用
+
+  ↓ フェーズ6: サムネイル生成
+    + canvas-design: 高品質サムネイルを生成
+
+  ↓ フェーズ7: ビルド・投稿（既存）
+
+  ↓ フェーズ8: ダッシュボード更新
+    + xlsx: channel_dashboard.xlsxに結果を追記
+
+================================================================
+## スキル初回セットアップ
+================================================================
+
+Claude Codeに以下を渡して初回セットアップを行う:
+
+```
+以下のスキルをCHANNEL FACTORYに統合してセットアップして:
+
+1. canvas-design: Pillowでサムネイル生成スクリプトを作成
+2. algorithmic-art: dark_tales用のp5.js Reactコンポーネントを作成
+3. theme-factory: 10チャンネル分のtokens.tsを更新
+4. xlsx: channel_dashboard.xlsxの初期ファイルとupdate関数を作成
+5. mcp-builder: mcp/youtube_analytics_server.pyを実装
+
+全部完成したらgit pushまで実行して
+```
+
+================================================================
+## v3アップデート（3つのAI提案を統合）
+================================================================
+
+================================================================
+### 修正1: YouTube API Quota対策（最重要）
+================================================================
+
+#### Quota計算
+videos.insert = 1,600 units/回
+thumbnails.set = 50 units/回
+1本あたり合計 = 約1,650 units
+
+デフォルト上限 = 10,000 units/日
+→ 最大6本/日しか投稿できない
+
+20本/日やるには以下のどちらかが必須:
+A) Quota増加申請（審査通過後に数十万units）
+B) チャンネルごとに別GCPプロジェクト（即効）
+
+#### 推奨: 案B（別GCPプロジェクト）
+
+10チャンネル × 10,000units = 100,000units/日
+これで20本/日が余裕で可能。
+
+##### 別GCPプロジェクトの設定
+チャンネルごとに以下を繰り返す:
+1. Google Cloud Console → 新しいプロジェクト作成
+   プロジェクト名: channel-factory-{channel_id}
+2. YouTube Data API v3 を有効化
+3. OAuth2クライアントIDを作成
+4. credentials/{channel_id}_credentials.json として保存
+5. python scripts/auth.py --channel {channel_id} で認証
+
+##### credentials命名規則（変更禁止）
+credentials/
+├── agent_zero_credentials.json
+├── gold_data_lab_credentials.json
+├── myth_breaker_credentials.json
+├── money_lab_credentials.json
+├── beauty_lab_credentials.json
+├── history_crash_credentials.json
+├── body_lab_credentials.json
+├── crypto_signal_credentials.json
+├── work_hack_credentials.json
+└── dark_tales_credentials.json
+
+#### Quota申請文言（案Aを使う場合）
+Google Cloud Console → APIとサービス → 割り当て
+→ YouTube Data API v3 → 上限を引き上げるリクエスト
+
+申請文:
+"""
+We are running a legitimate YouTube content creation
+business with 10 channels. We publish educational and
+entertainment videos daily using the YouTube Data API v3
+for automated uploads. Each channel uploads 2 videos per
+day (1 long-form + 1 short). We require increased quota
+to support our multi-channel operation.
+
+Requested quota: 200,000 units/day
+Use case: Automated video uploads for 10 YouTube channels
+Videos per day: 20 total (2 per channel x 10 channels)
+"""
+
+================================================================
+### 修正2: token.json形式の統一（pickle→JSON）
+================================================================
+
+#### scripts/auth.py の修正
+tokenをJSONで保存するように変更する:
+
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.oauth2.credentials import Credentials
+import json, os, argparse
+
+SCOPES = [
+    'https://www.googleapis.com/auth/youtube.upload',
+    'https://www.googleapis.com/auth/youtube'
+]
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--channel', required=True)
+args = parser.parse_args()
+
+flow = InstalledAppFlow.from_client_secrets_file(
+    f'credentials/{args.channel}_credentials.json', SCOPES)
+creds = flow.run_local_server(port=0)
+
+os.makedirs('credentials', exist_ok=True)
+
+# JSONで保存（pickleは使わない）
+token_data = {
+    'token': creds.token,
+    'refresh_token': creds.refresh_token,
+    'token_uri': creds.token_uri,
+    'client_id': creds.client_id,
+    'client_secret': creds.client_secret,
+    'scopes': list(creds.scopes)
+}
+with open(f'credentials/token_{args.channel}.json', 'w') as f:
+    json.dump(token_data, f)
+
+print(f"認証完了: credentials/token_{args.channel}.json")
+
+#### engine/factory.py でのtoken読み込み
+import json
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+
+def get_youtube_client(channel_id):
+    with open(f'credentials/token_{channel_id}.json', 'r') as f:
+        token_data = json.load(f)
+
+    creds = Credentials(
+        token=token_data['token'],
+        refresh_token=token_data['refresh_token'],
+        token_uri=token_data['token_uri'],
+        client_id=token_data['client_id'],
+        client_secret=token_data['client_secret'],
+        scopes=token_data['scopes']
+    )
+    return build('youtube', 'v3', credentials=creds)
+
+================================================================
+### 修正3: 投稿時間をチャンネルごとにずらす（Grok提案）
+================================================================
+
+同一IP・同時刻投稿はスパム判定リスクがあるため
+チャンネルごとに投稿時間を分散させる。
+
+#### daily_factory.yml の修正
+単一のcronではなく10個のcronジョブに分ける:
+
+on:
+  schedule:
+    - cron: '0 0 * * *'    # 09:00 JST - agent_zero
+    - cron: '12 0 * * *'   # 09:12 JST - gold_data_lab
+    - cron: '24 0 * * *'   # 09:24 JST - myth_breaker
+    - cron: '36 0 * * *'   # 09:36 JST - money_lab
+    - cron: '48 0 * * *'   # 09:48 JST - beauty_lab
+    - cron: '0 1 * * *'    # 10:00 JST - history_crash
+    - cron: '12 1 * * *'   # 10:12 JST - body_lab
+    - cron: '24 1 * * *'   # 10:24 JST - crypto_signal
+    - cron: '36 1 * * *'   # 10:36 JST - work_hack
+    - cron: '48 1 * * *'   # 10:48 JST - dark_tales
+
+#### または factory.py 内で sleep を入れる
+各チャンネルの処理後に待機時間を設ける:
+
+import time, random
+
+for i, config in enumerate(configs):
+    process_channel(config)
+    # チャンネル間で5〜15分ランダム待機
+    wait = random.randint(300, 900)
+    print(f"次のチャンネルまで {wait//60}分待機...")
+    time.sleep(wait)
+
+================================================================
+### 修正4: Remotion最適化（Grok提案）
+================================================================
+
+GitHub Actionsでのレンダリング時間を最小化する。
+
+#### engine/factory.py でのレンダリング設定
+npx remotion render コマンドに以下のオプションを追加:
+
+# 最適化オプション付きレンダリング
+render_cmd = f"""
+npx remotion render src/index.ts MainVideo \
+  --output=out/video.mp4 \
+  --concurrency=2 \
+  --scale=1 \
+  --log=error
+"""
+
+#### Remotionコンポーネントの最適化ルール
+- GPU依存エフェクト（blur・WebGL・p5.js重め）は
+  事前に静止画を生成してimgタグで表示
+- useMemo でフレームごとの計算をキャッシュ
+- シンプルなモーショングラフィクスを優先
+- 1本あたりのレンダリング目標: 3〜5分以内
+
+================================================================
+### 修正5: サムネイルABテスト（Gemini提案）
+================================================================
+
+1動画に対して2パターンのサムネイルを生成し
+クリック率を後で比較できるようにする。
+
+#### engine/thumbnail_ab.py として実装
+
+from PIL import Image, ImageDraw
+import json
+
+def generate_thumbnail_ab(channel_config, title, output_dir):
+    """
+    2パターンのサムネイルを生成する
+    A: タイトルテキスト中央配置・プライマリカラー背景
+    B: タイトルテキスト左寄せ・ダーク背景＋アクセントライン
+    """
+    colors = channel_config["colors"]
+
+    # パターンA: テキスト中央・明るめ
+    generate_variant(
+        title=title,
+        bg_color=colors["surface"],
+        text_color=colors["primary"],
+        layout="center",
+        output_path=f"{output_dir}/thumbnail_a.png"
+    )
+
+    # パターンB: テキスト左寄せ・ダーク
+    generate_variant(
+        title=title,
+        bg_color=colors["background"],
+        text_color=colors["text"],
+        layout="left",
+        accent_color=colors["primary"],
+        output_path=f"{output_dir}/thumbnail_b.png"
+    )
+
+    print(f"ABサムネイル生成完了: {output_dir}")
+    return "thumbnail_a.png", "thumbnail_b.png"
+
+# 最初はAパターンで投稿
+# 1週間後にYouTube Analyticsでクリック率を比較
+# クリック率が高い方を以降のデフォルトにする
+
+================================================================
+### 修正6: 炎上・ポリシー違反チェック（Gemini提案）
+================================================================
+
+投稿前に脚本をチェックして過激な表現を除去する。
+特にDARK TALESとMYTH BREAKERで必須。
+
+#### 実装（edge-ttsは使わずローカルで判定）
+
+PROHIBITED_PATTERNS = [
+    # 特定個人への攻撃
+    r'(kill|murder|attack)\s+(specific person)',
+    # 過激な表現
+    r'(gore|explicit violence|graphic)',
+    # 著作権侵害リスク
+    r'(copy|reproduce|verbatim)',
+    # 誤情報リスク
+    r'(definitely|100%|guaranteed)\s+(cure|prevent|treat)',
+]
+
+DARK_TALES_RULES = [
+    "実在する特定の人物名を使わない",
+    "実在する特定の住所・場所を断言しない",
+    "過度にグロテスクな描写をしない",
+    "「実話」と断言する際は「〜という話がある」形式にする",
+]
+
+def safety_check(script_text, channel_id):
+    """
+    脚本の安全性チェック
+    NGパターンが見つかった場合はFalseを返し
+    factory.pyが別テーマで再生成するよう促す
+    """
+    violations = []
+
+    for pattern in PROHIBITED_PATTERNS:
+        if re.search(pattern, script_text, re.IGNORECASE):
+            violations.append(pattern)
+
+    if channel_id == "dark_tales":
+        # DARK TALES専用の追加チェック
+        for rule in DARK_TALES_RULES:
+            # ルールベースの検査
+            pass
+
+    if violations:
+        print(f"⚠️ ポリシー違反の可能性: {violations}")
+        return False
+
+    print("✅ 安全性チェック: 問題なし")
+    return True
+
+# factory.py に組み込む
+# 脚本生成後・音声生成前に実行
+# Falseが返ったらテーマを変えて再生成
+
+================================================================
+### 修正7: GitHub リポジトリをPublicにする
+================================================================
+
+PublicリポジトリはGitHub Actionsが**完全無料・無制限**。
+Secretsにtokenを保存しているため機密情報は漏れない。
+
+#### 手順
+1. GitHubのリポジトリページを開く
+2. Settings → Danger Zone
+3. 「Change repository visibility」
+4. 「Make public」を選択
+5. リポジトリ名を入力して確認
+
+#### .gitignoreの確認（以下が必ず含まれていること）
+credentials/
+*.json（credentialsフォルダ内）
+.env
+channel_dashboard.xlsx
+channels/output/
+
+================================================================
+### 修正8: 実行前チェックリスト
+================================================================
+
+factory.py の冒頭で以下を確認してから実行:
+
+def preflight_check(channel_id):
+    """実行前チェック"""
+    checks = {
+        "token_exists": os.path.exists(
+            f"credentials/token_{channel_id}.json"),
+        "credentials_exists": os.path.exists(
+            f"credentials/{channel_id}_credentials.json"),
+        "voicevox_or_edgetts": True,  # edge-ttsは常にOK
+        "remotion_installed": os.path.exists("node_modules/.bin/remotion"),
+        "output_dir": os.makedirs("out", exist_ok=True) or True,
+    }
+
+    failed = [k for k, v in checks.items() if not v]
+    if failed:
+        print(f"❌ {channel_id}: チェック失敗 → {failed}")
+        return False
+
+    print(f"✅ {channel_id}: 全チェック通過")
+    return True
+
+================================================================
+## v3 完了レポート形式
+================================================================
+
+========== CHANNEL FACTORY v3 完了レポート ==========
+実行日時: YYYY-MM-DD HH:MM
+
+チャンネル別結果:
+✅ AGENT ZERO
+   長尺: youtu.be/xxx  クリック率: A/Bテスト中
+   ショート: youtu.be/xxx
+   安全チェック: ✅ 通過
+   Quota使用: 1,650 units
+
+❌ GOLD DATA LAB
+   エラー: token期限切れ → 再認証が必要
+
+総Quota使用: xx,xxx / 10,000 units
+GitHub Actions使用時間: xx分
+
+長尺: xx本 / ショート: xx本
+投稿時間帯: 09:00〜10:48 JST（チャンネル間12分間隔）
+==================================================
+
+================================================================
+## v4アップデート：アフィリエイト統合・収益最大化
+================================================================
+
+================================================================
+### SKILL 6: アフィリエイト自動挿入
+================================================================
+
+#### 設計思想
+YouTubeの広告収益は収益化まで0円。
+アフィリエイトは初投稿から稼げる。
+説明文・動画末尾テロップに自動挿入して
+登録者0人の状態から収益を発生させる。
+
+#### 各チャンネルのアフィリエイト設定
+
+channels/config/ の各JSONに以下を追加する:
+
+##### 01_agent_zero.json に追加
+"affiliate": {
+  "primary": {
+    "name": "Claude Pro",
+    "asp": "Anthropic Direct",
+    "url": "YOUR_AFFILIATE_URL_HERE",
+    "cta": "Try the AI tools mentioned in this video →"
+  },
+  "secondary": {
+    "name": "Amazon AI Books",
+    "asp": "Amazon Associates",
+    "tag": "YOUR_AMAZON_TAG",
+    "cta": "Recommended reading →"
+  }
+}
+
+##### 02_gold_data_lab.json に追加
+"affiliate": {
+  "primary": {
+    "name": "Forex Trading Course",
+    "asp": "ClickBank",
+    "url": "YOUR_CLICKBANK_HOPLINK",
+    "cta": "Get the trading system used in this analysis →",
+    "commission": "$50-$150 per sale"
+  },
+  "secondary": {
+    "name": "Exness / XM",
+    "asp": "Impact.com",
+    "url": "YOUR_IMPACT_URL",
+    "cta": "Open a trading account →",
+    "commission": "$100-$300 per account"
+  }
+}
+
+##### 03_myth_breaker.json に追加
+"affiliate": {
+  "primary": {
+    "name": "Science Experiment Kits",
+    "asp": "Amazon Associates",
+    "tag": "YOUR_AMAZON_TAG",
+    "cta": "Try this experiment yourself →"
+  }
+}
+
+##### 04_money_lab.json に追加
+"affiliate": {
+  "primary": {
+    "name": "Personal Finance Course",
+    "asp": "ClickBank / Digistore24",
+    "url": "YOUR_AFFILIATE_URL",
+    "cta": "Get the complete money system →",
+    "commission": "$50-$100 per sale"
+  },
+  "secondary": {
+    "name": "Investment App",
+    "asp": "Impact.com",
+    "url": "YOUR_IMPACT_URL",
+    "cta": "Start investing today →"
+  }
+}
+
+##### 05_beauty_lab.json に追加
+"affiliate": {
+  "primary": {
+    "name": "Skincare Products",
+    "asp": "Amazon Associates / ShareASale",
+    "tag": "YOUR_AMAZON_TAG",
+    "cta": "Shop science-backed skincare →"
+  }
+}
+
+##### 06_history_crash.json に追加
+"affiliate": {
+  "primary": {
+    "name": "History Books",
+    "asp": "Amazon Associates",
+    "tag": "YOUR_AMAZON_TAG",
+    "cta": "Dive deeper into this story →"
+  }
+}
+
+##### 07_body_lab.json に追加
+"affiliate": {
+  "primary": {
+    "name": "Keto / Fitness Program",
+    "asp": "ClickBank / Digistore24",
+    "url": "YOUR_CLICKBANK_HOPLINK",
+    "cta": "Get the science-based fitness plan →",
+    "commission": "$40-$80 per sale"
+  },
+  "secondary": {
+    "name": "Supplements",
+    "asp": "Amazon Associates",
+    "tag": "YOUR_AMAZON_TAG",
+    "cta": "Shop recommended supplements →"
+  }
+}
+
+##### 08_crypto_signal.json に追加
+"affiliate": {
+  "primary": {
+    "name": "Binance / Coinbase",
+    "asp": "Direct Program",
+    "url": "YOUR_EXCHANGE_REFERRAL",
+    "cta": "Start trading with bonus →",
+    "commission": "$10-$50 per signup"
+  },
+  "secondary": {
+    "name": "Crypto Course",
+    "asp": "ClickBank",
+    "url": "YOUR_CLICKBANK_HOPLINK",
+    "cta": "Learn on-chain analysis →"
+  }
+}
+
+##### 09_work_hack.json に追加
+"affiliate": {
+  "primary": {
+    "name": "Productivity App / Course",
+    "asp": "ClickBank / Impact.com",
+    "url": "YOUR_AFFILIATE_URL",
+    "cta": "Get the productivity system →",
+    "commission": "$30-$70 per sale"
+  },
+  "secondary": {
+    "name": "Business Books",
+    "asp": "Amazon Associates",
+    "tag": "YOUR_AMAZON_TAG",
+    "cta": "Recommended books →"
+  }
+}
+
+##### 10_dark_tales.json に追加
+"affiliate": {
+  "primary": {
+    "name": "Horror / Mystery Books",
+    "asp": "Amazon Associates",
+    "tag": "YOUR_AMAZON_TAG",
+    "cta": "Read more terrifying true stories →"
+  }
+}
+
+================================================================
+### アフィリエイトURLの自動挿入フェーズ
+================================================================
+
+フェーズ6（メタデータ生成）に以下を追加する:
+
+#### 説明文への挿入
+out/youtube_metadata.txt の説明文末尾に
+チャンネルのaffiliate設定を自動挿入する:
+
+def insert_affiliate_links(metadata_text, channel_config):
+    """
+    説明文にアフィリエイトリンクを自然に挿入する
+    """
+    affiliate = channel_config.get("affiliate", {})
+    if not affiliate:
+        return metadata_text
+
+    primary = affiliate.get("primary", {})
+    secondary = affiliate.get("secondary", {})
+
+    affiliate_section = "\n\n---\n"
+
+    if primary.get("url") and "YOUR_" not in primary["url"]:
+        affiliate_section += f"🔗 {primary['cta']}\n"
+        affiliate_section += f"{primary['url']}\n\n"
+
+    if secondary.get("url") and "YOUR_" not in secondary.get("url", "YOUR_"):
+        affiliate_section += f"📚 {secondary['cta']}\n"
+        affiliate_section += f"{secondary['url']}\n\n"
+    elif secondary.get("tag") and "YOUR_" not in secondary.get("tag", "YOUR_"):
+        affiliate_section += f"📚 {secondary['cta']}\n"
+        affiliate_section += f"https://amazon.com/shop/tag={secondary['tag']}\n\n"
+
+    affiliate_section += "* Some links are affiliate links. "
+    affiliate_section += "I may earn a commission at no extra cost to you.\n"
+
+    return metadata_text + affiliate_section
+
+#### 動画末尾テロップへの挿入（Remotion）
+OutroSceneに以下のテロップを自動追加する:
+
+// OutroScene.tsx に追加
+const affiliateCTA = channelConfig.affiliate?.primary?.cta;
+const affiliateURL = channelConfig.affiliate?.primary?.url;
+
+{affiliateCTA && !affiliateURL?.includes('YOUR_') && (
+  <div style={{
+    position: 'absolute',
+    bottom: 120,
+    left: '50%',
+    transform: 'translateX(-50%)',
+    background: colors.primary + '20',
+    border: `1px solid ${colors.primary}`,
+    padding: '12px 24px',
+    borderRadius: 8,
+    color: colors.primary,
+    fontSize: 24,
+    textAlign: 'center'
+  }}>
+    🔗 {affiliateCTA}
+  </div>
+)}
+
+================================================================
+### チャンネル資産価値の自動記録
+================================================================
+
+Gemini提案のチャンネル売却（Fameswap等）に備えて
+チャンネルの資産価値を毎回記録する。
+
+#### channel_dashboard.xlsx に追加するシート
+
+**Sheet4: 資産価値記録**
+| チャンネル | 累計投稿数 | 推定登録者 | 推定時価($) | 売却判断 |
+- 推定時価: 月収 × 12〜24倍（業界標準の計算式）
+- 売却判断: 「保持」「売却検討」「売却準備」を自動判定
+
+売却判断ロジック:
+- 収益化未達 + 登録者500人以上 → 「売却検討」
+- 収益化達成 + 月収$200以上 → 「保持」
+- 成長が止まった + 月収$50以下 → 「売却検討」
+
+#### Fameswap用の出品文を自動生成
+売却検討チャンネルが出た場合、以下を自動生成する:
+
+def generate_fameswap_listing(channel_config, stats):
+    return f"""
+Channel: {channel_config['name']}
+Niche: {channel_config['genre']}
+Videos: {stats['total_videos']}
+Subscribers: {stats['subscribers']}
+Monthly Views: {stats['monthly_views']}
+
+Included:
+- Fully automated video generation system
+- 10 channel configs (can be adapted)
+- GitHub Actions workflow (daily auto-posting)
+- Edge-tts voice generation
+- Remotion video templates
+
+The system generates, renders and uploads videos
+completely automatically. Zero daily maintenance required.
+
+Asking price: ${stats['asking_price']}
+"""
+
+================================================================
+## v4 ASP登録ガイド（URLが取れたらconfigに貼るだけ）
+================================================================
+
+### 優先順位で登録するASP
+
+**即日使える（最優先）**
+1. Amazon Associates
+   https://affiliate-program.amazon.com
+   → 全チャンネルで使える。審査なし。即日発行。
+
+2. ClickBank
+   https://www.clickbank.com
+   → デジタル商材。審査なし。即日発行。
+   → GOLD DATA LAB・MONEY LAB・BODY LAB・WORK HACKで使う
+
+3. Digistore24
+   https://www.digistore24.com
+   → ClickBankと同様。欧州系に強い。
+
+**1週間以内（中優先）**
+4. Impact.com
+   https://impact.com
+   → FX・暗号通貨口座開設。単価高い。審査あり。
+   → GOLD DATA LAB・CRYPTO SIGNALで使う
+
+5. ShareASale
+   https://www.shareasale.com
+   → 美容・健康系が豊富。
+   → BEAUTY LAB・BODY LABで使う
+
+### URLが取れたら
+config内の "YOUR_AFFILIATE_URL_HERE" を
+実際のURLに置き換えるだけ。
+次回のfactory.py実行から自動で挿入される。
+
+================================================================
+## v4 完了レポート形式
+================================================================
+
+========== CHANNEL FACTORY v4 完了レポート ==========
+実行日時: YYYY-MM-DD HH:MM
+
+チャンネル別結果:
+✅ AGENT ZERO
+   長尺: youtu.be/xxx  ショート: youtu.be/xxx
+   アフィリエイト: 説明文・テロップ挿入済み ✅
+   安全チェック: ✅ 通過
+   Quota使用: 1,650 units
+
+収益ポテンシャル（本日分）:
+   広告収益: $0（収益化前）
+   アフィリエイト: 潜在$0〜$500（クリック次第）
+
+チャンネル資産価値:
+   AGENT ZERO: 推定$0（投稿開始直後）
+   → 3ヶ月後目標: $500〜$2,000
+
+GitHub Actions使用時間: xx分 / 2,000分（無制限・Public）
 ==================================================
