@@ -37,6 +37,77 @@ VOICE_MAP_JA = {
 FPS = 30
 
 
+# ============================================================
+# Used Topics Tracking (duplicate prevention)
+# ============================================================
+def load_used_topics(out_dir):
+    """Load previously used topics from used_topics.json."""
+    topics_path = out_dir / "used_topics.json"
+    if topics_path.exists():
+        with open(topics_path, encoding="utf-8") as f:
+            data = json.load(f)
+        return data.get("topics", [])
+    return []
+
+
+def save_used_topics(out_dir, topics):
+    """Save used topics list to used_topics.json."""
+    topics_path = out_dir / "used_topics.json"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    with open(topics_path, "w", encoding="utf-8") as f:
+        json.dump({"topics": topics}, f, indent=2, ensure_ascii=False)
+    print(f"    -> used_topics.json updated ({len(topics)} topics)")
+
+
+def add_used_topic(out_dir, topic):
+    """Append a topic to used_topics.json if not already present."""
+    topics = load_used_topics(out_dir)
+    if topic and topic not in topics:
+        topics.append(topic)
+        save_used_topics(out_dir, topics)
+
+
+def _extract_topic_from_metadata(out_dir):
+    """Extract the video topic/title from youtube_metadata.txt."""
+    meta_path = out_dir / "out" / "youtube_metadata.txt"
+    if not meta_path.exists():
+        return None
+    title, _, _ = parse_metadata(str(meta_path))
+    return title if title else None
+
+
+def _git_commit_used_topics():
+    """Commit all used_topics.json files so they persist across CI runs."""
+    print("\n  [Post] Committing used_topics.json files to git...")
+    result = subprocess.run(
+        ["git", "add", "channels/output/*/used_topics.json"],
+        cwd=str(BASE_DIR), capture_output=True, text=True,
+    )
+    # Check if there are staged changes
+    result = subprocess.run(
+        ["git", "diff", "--cached", "--quiet"],
+        cwd=str(BASE_DIR), capture_output=True, text=True,
+    )
+    if result.returncode == 0:
+        print("    -> No new topics to commit")
+        return
+    result = subprocess.run(
+        ["git", "commit", "-m", "update used_topics.json [skip ci]"],
+        cwd=str(BASE_DIR), capture_output=True, text=True,
+    )
+    if result.returncode != 0:
+        print(f"    -> git commit failed: {result.stderr[:200]}")
+        return
+    result = subprocess.run(
+        ["git", "push"],
+        cwd=str(BASE_DIR), capture_output=True, text=True, timeout=60,
+    )
+    if result.returncode == 0:
+        print("    -> used_topics.json committed and pushed")
+    else:
+        print(f"    -> git push failed: {result.stderr[:200]}")
+
+
 def load_configs(channel_filter=None):
     """Load channel configs, optionally filtering to a specific channel."""
     configs = []
@@ -63,13 +134,20 @@ def phase0_research(ch, out_dir):
         print(f"    -> research.json already exists, skipping")
         return True
 
+    # Load used topics to avoid duplicates
+    used = load_used_topics(out_dir)
+    if used:
+        print(f"    -> {len(used)} previously used topics loaded (will exclude)")
+
     # In production, this would call web search APIs and score topics.
     # For now, generate a placeholder indicating manual research is needed.
     research = {
         "status": "pending",
         "keywords": ch.get("search_keywords", []),
+        "used_topics": used,
         "note": "Automated research requires web search API integration. "
-                "Provide a topic manually or run with Claude Code for full research.",
+                "Provide a topic manually or run with Claude Code for full research. "
+                "Topics in used_topics have already been covered — choose a new angle.",
     }
     with open(research_file, "w", encoding="utf-8") as f:
         json.dump(research, f, indent=2, ensure_ascii=False)
@@ -612,6 +690,13 @@ def process_channel(ch, lang, skip_upload=False):
         video_exists = (out_dir / "out" / "video.mp4").exists()
         result["success"] = video_exists
 
+        # Record used topic to prevent duplicates in future runs
+        if video_exists:
+            topic = _extract_topic_from_metadata(out_dir)
+            if topic:
+                add_used_topic(out_dir, topic)
+                result["topic"] = topic
+
     except Exception as e:
         result["error"] = str(e)
         print(f"  [ERROR] {e}")
@@ -717,6 +802,11 @@ def main():
     # Write report
     report_path = BASE_DIR / "factory_report.txt"
     write_report(results, str(report_path))
+
+    # Commit used_topics.json files to git for persistence across CI runs
+    any_success = any(r["success"] for r in results)
+    if any_success:
+        _git_commit_used_topics()
 
 
 if __name__ == "__main__":
