@@ -175,10 +175,13 @@ channels/output/{channel_id}/src/
 2キャラクターのセリフを交互に設計し script.json に保存する。
 
 ### 台本ルール
+- 最初から英語で生成する。翻訳は使わない。
+- 英語ネイティブが自然に話す口語表現で書く。
+- キャラクターの口調・個性は維持する。
 - main_characterのセリフ: 短く・断言調・最大2文
 - sub_characterのセリフ: 疑問形か驚き・最大2文
 - 1シーンで2〜4往復の掛け合い
-- 全体で1000〜1600文字
+- 全体で150〜250 words
 
 ### script.jsonの形式
 [
@@ -478,114 +481,20 @@ BGMはフリーのダークアンビエント音源を使用:
 src/audio/bgm_dark.mp3 として配置
 
 ================================================================
-## バイリンガル対応フェーズ（全チャンネル共通）
+## 英語ファースト生成ポリシー（全チャンネル共通）
 ================================================================
 
-00_bilingual_config.json を読み込み、
-日本語版の生成完了後に以下を実行する。
+すべての脚本・メタデータは最初から英語で生成する。
+翻訳は使わない。英語ネイティブが自然に話す口語表現で書く。
+キャラクターの口調・個性は維持する。
 
-### 英語版生成の流れ
-
-#### Step1: 台本の英語翻訳
-日本語のscript.jsonを読み込み、deep-translatorで英語に翻訳する。
-APIキー不要・完全無料。
-
-pip install deep-translator
-
-import json, time
-from deep_translator import GoogleTranslator
-
-translator = GoogleTranslator(source='ja', target='en')
-
-with open("src/audio/script.json", encoding='utf-8') as f:
-    ja_script = json.load(f)
-
-en_script = []
-for item in ja_script:
-    translated = translator.translate(item["text"])
-    en_item = item.copy()
-    en_item["text"] = translated
-    en_script.append(en_item)
-    time.sleep(0.3)  # レート制限対策
-
-with open("src/audio/script_en.json", "w", encoding='utf-8') as f:
-    json.dump(en_script, f, ensure_ascii=False, indent=2)
-
-print(f"翻訳完了: {len(en_script)}件")
-
-#### Step2: edge-ttsで英語音声生成
-pip install edge-tts
-
-import asyncio, edge_tts, json
-from pydub import AudioSegment
-import io
-
-with open("src/audio/script_en.json", encoding='utf-8') as f:
-    en_script = json.load(f)
-
-# bilingual_config から voice を取得
-voices = bilingual_config["channel_voice_mapping"][channel_id]
-VOICE_MAP = {"MAIN": voices["main"], "SUB": voices["sub"]}
-
-segments = []
-timing = []
-offset = 0.0
-
-async def generate_audio(text, voice):
-    communicate = edge_tts.Communicate(text, voice)
-    audio_data = b""
-    async for chunk in communicate.stream():
-        if chunk["type"] == "audio":
-            audio_data += chunk["data"]
-    return audio_data
-
-for item in en_script:
-    voice = VOICE_MAP[item["speaker"]]
-    audio_bytes = asyncio.run(generate_audio(item["text"], voice))
-    audio = AudioSegment.from_file(io.BytesIO(audio_bytes), format="mp3")
-    segments.append(audio)
-    duration_sec = len(audio) / 1000.0
-    timing.append({
-        "scene": item["scene"],
-        "startFrame": item["startFrame"],
-        "speaker": item["speaker"],
-        "character_name": item["character_name"],
-        "audioOffsetSec": offset,
-        "durationSec": duration_sec
-    })
-    offset += duration_sec
-
-combined = segments[0]
-for s in segments[1:]:
-    combined += s
-combined.export("src/audio/narration_en.mp3", format="mp3")
-with open("src/audio/timing_en.json", "w") as f:
-    json.dump(timing, f, ensure_ascii=False, indent=2)
-
-#### Step3: 英語版Remotionビルド
-日本語版と同じプロジェクトを使い、
-以下の差分だけ適用して英語版をビルドする:
-- Root.tsxのAudioソースを narration_en.mp3 に変更
-- DialogueBarのtimingDataを timing_en.json に変更
-- フォントの Noto Sans JP を Inter に変更（bilingual_config参照）
-
-npx remotion render src/index.ts MainVideo \
-  --props='{"language":"en"}' \
-  --output=out/video_en.mp4
-
-npx remotion still src/index.ts TitleScene \
-  --props='{"language":"en"}' \
-  --frame=120 --output=out/thumbnail_en.png --width=1280 --height=720
-
-npx remotion render src/index.ts YouTubeShort \
-  --props='{"language":"en"}' \
-  --output=out/short_en.mp4
-
-#### Step4: 英語版メタデータ生成
-out/youtube_metadata_en.txt を生成する。
+### 英語音声設定（全チャンネル共通）
+VOICE_MAP_EN = {
+    "MAIN": "en-US-GuyNeural",
+    "SUB": "en-US-AriaNeural",
+}
 
 ### 英語版タイトルルール
-- bilingual_config["en_search_keywords_supplement"][channel_id]を参照
 - 英語圏で検索されやすいワードを優先
 - 「常識を覆す」系なら: "The Truth About...", "This Will Change How You..."
 - 「体験談」系なら: "I Tried...", "What Happened When..."

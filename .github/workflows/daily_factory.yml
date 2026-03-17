@@ -1,4 +1,4 @@
-name: CHANNEL FACTORY - Daily Auto Post（日本語版・20本/日）
+name: CHANNEL FACTORY - Daily Auto Post (English・20 videos/day)
 
 on:
   schedule:
@@ -79,7 +79,7 @@ jobs:
           echo "${{ secrets.TOKEN_WORK_HACK }}"     | base64 -d > credentials/token_work_hack.json
           echo "${{ secrets.TOKEN_DARK_TALES }}"    | base64 -d > credentials/token_dark_tales.json
 
-      # 日本語のみ・20本/日で実行
+      # English・20 videos/day
       - name: Run Channel Factory
         env:
           DISPLAY: ':99'
@@ -88,9 +88,9 @@ jobs:
           Xvfb :99 -screen 0 1920x1080x24 &
           sleep 2
           if [ -n "$CHANNEL" ]; then
-            python engine/factory.py --channel "$CHANNEL" --lang ja
+            python engine/factory.py --channel "$CHANNEL" --lang en
           else
-            python engine/factory.py --lang ja
+            python engine/factory.py --lang en
           fi
 
       - name: Upload results
@@ -107,7 +107,7 @@ jobs:
       - name: Show summary
         if: always()
         run: |
-          echo "## 本日の投稿結果（日本語版）" >> $GITHUB_STEP_SUMMARY
-          echo "10チャンネル × 長尺1本 + ショート1本 = **20本投稿**" >> $GITHUB_STEP_SUMMARY
+          echo "## Daily Upload Results (English)" >> $GITHUB_STEP_SUMMARY
+          echo "10 channels × 1 long + 1 short = **20 videos**" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          cat factory_report.txt >> $GITHUB_STEP_SUMMARY || echo "レポートなし" >> $GITHUB_STEP_SUMMARY
+          cat factory_report.txt >> $GITHUB_STEP_SUMMARY || echo "No report" >> $GITHUB_STEP_SUMMARY
