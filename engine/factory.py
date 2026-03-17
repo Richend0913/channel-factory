@@ -188,7 +188,42 @@ def phase2_visuals(ch, out_dir):
         print(f"    -> Remotion project already exists")
         return True
 
-    print(f"    -> Remotion project not found. Generate manually or via Claude Code.")
+    # Auto-setup from template
+    template_dir = BASE_DIR / "engine" / "remotion-template"
+    if template_dir.exists():
+        import shutil
+        print(f"    -> Copying Remotion template...")
+        if remotion_dir.exists():
+            shutil.rmtree(str(remotion_dir))
+        shutil.copytree(str(template_dir), str(remotion_dir))
+
+        # Apply channel-specific colors if available
+        colors = ch.get("colors", {})
+        if colors:
+            main_tsx = remotion_dir / "src" / "MainVideo.tsx"
+            content = main_tsx.read_text(encoding="utf-8")
+            color_map = {
+                "#07080f": colors.get("background", "#07080f"),
+                "#4fffff": colors.get("primary", "#4fffff"),
+                "#a855f7": colors.get("secondary", "#a855f7"),
+                "#f0f4ff": colors.get("text", "#f0f4ff"),
+            }
+            for old_color, new_color in color_map.items():
+                content = content.replace(old_color, new_color)
+            main_tsx.write_text(content, encoding="utf-8")
+            print(f"    -> Applied channel colors")
+
+        # Copy script.json to public/audio/ if it exists
+        script_src = out_dir / "src" / "audio" / "script.json"
+        audio_pub = remotion_dir / "public" / "audio"
+        audio_pub.mkdir(parents=True, exist_ok=True)
+        if script_src.exists():
+            shutil.copy2(str(script_src), str(audio_pub / "script.json"))
+
+        print(f"    -> Remotion project created from template")
+        return True
+
+    print(f"    -> Remotion project not found and no template available.")
     return False
 
 
@@ -492,8 +527,16 @@ def _build_youtube_client(ch, lang):
         print(f"    -> Missing: pip install google-api-python-client google-auth")
         return None, None
 
-    with open(token_path, encoding="utf-8") as f:
-        token_data = json.load(f)
+    try:
+        with open(token_path, encoding="utf-8") as f:
+            content = f.read().strip()
+        if not content:
+            print(f"    -> ERROR: Token file is empty (Secret not set?)")
+            return None, None
+        token_data = json.loads(content)
+    except (json.JSONDecodeError, ValueError) as e:
+        print(f"    -> ERROR: Invalid token JSON: {e}")
+        return None, None
 
     creds = Credentials(
         token=token_data["token"],

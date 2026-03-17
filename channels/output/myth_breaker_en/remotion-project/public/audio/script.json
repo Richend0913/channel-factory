@@ -1,0 +1,156 @@
+[
+  {
+    "scene": "HookScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "BELI",
+    "text": "You only use ten percent of your brain, right? I've heard that my whole life."
+  },
+  {
+    "scene": "HookScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "MYTH",
+    "text": "fMRI scans show every region of your brain is active within a twenty-four hour period. Even during sleep, your brain uses twenty percent of your body's total energy. A ten-percent brain would use two percent. You'd be in a coma."
+  },
+  {
+    "scene": "HookScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "BELI",
+    "text": "But where did this myth even come from?"
+  },
+  {
+    "scene": "HookScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "MYTH",
+    "text": "It's been traced to a misquote of William James from 1907. He said we only use a fraction of our mental potential — meaning we're lazy, not that our neurons are offline."
+  },
+  {
+    "scene": "ConflictScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "BELI",
+    "text": "OK but I definitely feel like I'm not using my full brain sometimes."
+  },
+  {
+    "scene": "ConflictScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "MYTH",
+    "text": "That feeling is real but the explanation is wrong. Your brain has eighty-six billion neurons. At any single moment, about one to sixteen percent fire simultaneously. If all fired at once? That's called a seizure."
+  },
+  {
+    "scene": "ConflictScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "BELI",
+    "text": "So using a hundred percent of your brain is literally a medical emergency?"
+  },
+  {
+    "scene": "ConflictScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "MYTH",
+    "text": "Exactly. The brain works by selective activation. Different tasks light up different networks. A 2014 study in PNAS mapped over seventy thousand neural pathways and found every single one was used for something."
+  },
+  {
+    "scene": "InvestigationScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "BELI",
+    "text": "What about the movie Lucy? She unlocked a hundred percent and became superhuman."
+  },
+  {
+    "scene": "InvestigationScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "MYTH",
+    "text": "Hollywood loves this myth because it sells tickets. A 2013 survey by the Michael J. Fox Foundation found sixty-five percent of Americans still believe the ten-percent myth. Movies keep it alive."
+  },
+  {
+    "scene": "InvestigationScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "BELI",
+    "text": "Sixty-five percent? That's insane."
+  },
+  {
+    "scene": "InvestigationScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "MYTH",
+    "text": "It gets better. A separate study asked neuroscience students. Even among them, thirty-two percent believed it. A third of brain science students think most of their brain is just sitting there doing nothing."
+  },
+  {
+    "scene": "TwistScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "BELI",
+    "text": "OK so we use all of our brain. But can we make it work better?"
+  },
+  {
+    "scene": "TwistScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "MYTH",
+    "text": "Here's the real twist. You can't unlock more brain, but you can optimize what you have. Neuroplasticity research shows learning new skills physically rewires neural connections. A London taxi driver study found their hippocampus was significantly larger than average."
+  },
+  {
+    "scene": "TwistScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "BELI",
+    "text": "So their brains literally grew from memorizing streets?"
+  },
+  {
+    "scene": "TwistScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "MYTH",
+    "text": "Grew and restructured. Sleep also plays a massive role. A UC Berkeley study showed one night of sleep deprivation reduces hippocampal activity by forty percent. You don't need more brain — you need to stop sabotaging the one you have."
+  },
+  {
+    "scene": "ResolutionScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "BELI",
+    "text": "So what's the verdict?"
+  },
+  {
+    "scene": "ResolutionScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "MYTH",
+    "text": "The ten-percent myth is completely false. You use your entire brain. The real issue isn't capacity — it's efficiency. Sleep, exercise, and learning new things are the only evidence-backed brain boosters."
+  },
+  {
+    "scene": "ResolutionScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "BELI",
+    "text": "No magic pills, no secret unlock codes."
+  },
+  {
+    "scene": "ResolutionScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "MYTH",
+    "text": "Just neuroscience."
+  },
+  {
+    "scene": "OutroScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "BELI",
+    "text": "Next week we're busting another myth — does cracking your knuckles actually cause arthritis?"
+  },
+  {
+    "scene": "OutroScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "MYTH",
+    "text": "Subscribe so you don't miss it. We break one myth every week with actual science."
+  }
+]

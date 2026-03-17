@@ -1,0 +1,156 @@
+[
+  {
+    "scene": "HookScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "RAY",
+    "text": "Everyone says gold goes up when the dollar goes down, right?"
+  },
+  {
+    "scene": "HookScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "GOLD",
+    "text": "I pulled fifteen years of XAUUSD and DXY data. The correlation is minus zero point four two. That means fifty-eight percent of the time, they don't move opposite at all."
+  },
+  {
+    "scene": "HookScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "RAY",
+    "text": "Wait, so the number one rule in gold trading is only right half the time?"
+  },
+  {
+    "scene": "HookScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "GOLD",
+    "text": "Less than half. And it gets worse. During 2022 and 2023, the correlation actually flipped positive for months. Dollar up, gold up."
+  },
+  {
+    "scene": "ConflictScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "RAY",
+    "text": "But every analyst on YouTube says watch the DXY before trading gold!"
+  },
+  {
+    "scene": "ConflictScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "GOLD",
+    "text": "Let's look at what actually moves gold. Central bank buying hit thirteen hundred and thirty-six metric tons in 2024. That's the third straight record year. China alone added two hundred and twenty-five tons."
+  },
+  {
+    "scene": "ConflictScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "RAY",
+    "text": "So governments are stacking gold like crazy?"
+  },
+  {
+    "scene": "ConflictScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "GOLD",
+    "text": "And here's the thing. When central banks buy, the DXY correlation breaks completely. Supply-demand overwhelms the macro signal."
+  },
+  {
+    "scene": "InvestigationScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "RAY",
+    "text": "OK so what about the other big one — gold is an inflation hedge?"
+  },
+  {
+    "scene": "InvestigationScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "GOLD",
+    "text": "From 1980 to 2000, US inflation averaged three point two percent. Gold dropped from eight hundred and fifty to two hundred and sixty. Twenty years of inflation, seventy percent gold crash."
+  },
+  {
+    "scene": "InvestigationScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "RAY",
+    "text": "That completely kills the inflation hedge narrative."
+  },
+  {
+    "scene": "InvestigationScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "GOLD",
+    "text": "Gold hedges currency debasement, not consumer inflation. There's a massive difference. CPI going up three percent doesn't help gold. But M2 money supply expanding thirty percent in two years? That's 2020 to 2022, and gold went from fifteen hundred to two thousand."
+  },
+  {
+    "scene": "TwistScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "RAY",
+    "text": "So what's the real signal?"
+  },
+  {
+    "scene": "TwistScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "GOLD",
+    "text": "Real interest rates. When you subtract CPI from the ten-year Treasury yield, that number has a minus zero point eight two correlation with gold since 2003. Way stronger than the DXY."
+  },
+  {
+    "scene": "TwistScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "RAY",
+    "text": "Minus zero point eight two? That's almost perfectly inverse!"
+  },
+  {
+    "scene": "TwistScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "GOLD",
+    "text": "Real rates go negative, gold rips. Real rates go positive, gold struggles. It's that simple. The DXY trade is a cargo cult — people copy it because everyone else does, not because the data supports it."
+  },
+  {
+    "scene": "ResolutionScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "RAY",
+    "text": "So what's the takeaway for traders?"
+  },
+  {
+    "scene": "ResolutionScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "GOLD",
+    "text": "Three rules from the data. One — watch real rates, not the dollar. Two — track central bank flows, especially China and emerging markets. Three — ignore CPI headlines. M2 expansion is your signal."
+  },
+  {
+    "scene": "ResolutionScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "RAY",
+    "text": "Fifteen years of data versus YouTube analysts. Data wins."
+  },
+  {
+    "scene": "ResolutionScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "GOLD",
+    "text": "Always does."
+  },
+  {
+    "scene": "OutroScene",
+    "startFrame": 0,
+    "speaker": "SUB",
+    "character_name": "RAY",
+    "text": "Next week we're testing another gold myth — does the London session open actually set the daily direction?"
+  },
+  {
+    "scene": "OutroScene",
+    "startFrame": 0,
+    "speaker": "MAIN",
+    "character_name": "GOLD",
+    "text": "Subscribe so you don't miss the data. We test trading myths every week."
+  }
+]

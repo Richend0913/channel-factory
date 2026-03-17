@@ -79,7 +79,7 @@ jobs:
           echo "${{ secrets.TOKEN_WORK_HACK }}"     | base64 -d > credentials/token_work_hack.json
           echo "${{ secrets.TOKEN_DARK_TALES }}"    | base64 -d > credentials/token_dark_tales.json
 
-      # English・20 videos/day
+      # English — 3 active channels
       - name: Run Channel Factory
         env:
           DISPLAY: ':99'
@@ -90,7 +90,9 @@ jobs:
           if [ -n "$CHANNEL" ]; then
             python engine/factory.py --channel "$CHANNEL" --lang en
           else
-            python engine/factory.py --lang en
+            python engine/factory.py --channel agent_zero --lang en
+            python engine/factory.py --channel gold_data_lab --lang en
+            python engine/factory.py --channel myth_breaker --lang en
           fi
 
       - name: Upload results
@@ -108,6 +110,6 @@ jobs:
         if: always()
         run: |
           echo "## Daily Upload Results (English)" >> $GITHUB_STEP_SUMMARY
-          echo "10 channels × 1 long + 1 short = **20 videos**" >> $GITHUB_STEP_SUMMARY
+          echo "3 channels × 1 long + 1 short = **6 videos**" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           cat factory_report.txt >> $GITHUB_STEP_SUMMARY || echo "No report" >> $GITHUB_STEP_SUMMARY
