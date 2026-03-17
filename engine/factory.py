@@ -467,26 +467,30 @@ def phase6_metadata(ch, out_dir, lang):
 # Phase 7: YouTube Upload
 # ============================================================
 def _build_youtube_client(ch, lang):
-    """Build authenticated YouTube API client."""
+    """Build authenticated YouTube API client with channel verification."""
     channel_id = ch["id"]
+    channel_name = ch.get("name", channel_id)
+    expected_yt_id = ch.get("youtube_channel_id")
+
+    # Resolve token path
     token_suffix = f"_{channel_id}" if lang == "ja" else f"_{channel_id}_en"
     token_path = CREDENTIALS_DIR / f"token{token_suffix}.json"
-
-    # Fallback: try without lang suffix if en token doesn't exist
     if not token_path.exists() and lang == "en":
         token_path = CREDENTIALS_DIR / f"token_{channel_id}.json"
 
+    print(f"    -> Mapping: channel_id={channel_id} → token={token_path.name}")
+
     if not token_path.exists():
-        print(f"    -> No token found at {token_path}")
+        print(f"    -> ERROR: No token found at {token_path}")
         print(f"       Run: python scripts/auth.py --channel {channel_id}")
-        return None
+        return None, None
 
     try:
         from google.oauth2.credentials import Credentials
         from googleapiclient.discovery import build
     except ImportError:
         print(f"    -> Missing: pip install google-api-python-client google-auth")
-        return None
+        return None, None
 
     with open(token_path, encoding="utf-8") as f:
         token_data = json.load(f)
@@ -499,10 +503,39 @@ def _build_youtube_client(ch, lang):
         client_secret=token_data.get("client_secret"),
         scopes=token_data.get("scopes"),
     )
-    return build("youtube", "v3", credentials=creds)
+    youtube = build("youtube", "v3", credentials=creds)
+
+    # Verify which YouTube channel this token actually belongs to
+    try:
+        resp = youtube.channels().list(part="snippet", mine=True).execute()
+        items = resp.get("items", [])
+        if not items:
+            print(f"    -> WARNING: Token has no associated YouTube channel")
+            return youtube, None
+
+        actual_yt_id = items[0]["id"]
+        actual_yt_name = items[0]["snippet"]["title"]
+        print(f"    -> YouTube channel: {actual_yt_name} (ID: {actual_yt_id})")
+
+        # If config has youtube_channel_id, verify it matches
+        if expected_yt_id and expected_yt_id != actual_yt_id:
+            print(f"    -> ABORT: Channel mismatch! "
+                  f"Config expects {expected_yt_id} but token is for {actual_yt_id} ({actual_yt_name})")
+            print(f"       Check that token_{channel_id}.json matches the correct Google account.")
+            return None, None
+
+        return youtube, actual_yt_name
+
+    except Exception as e:
+        # youtube.upload scope may not have channels.list permission
+        # Log warning but allow upload to proceed
+        print(f"    -> WARNING: Could not verify channel ownership: {e}")
+        print(f"    -> Proceeding with upload (add youtube_channel_id to config for safety)")
+        return youtube, None
 
 
-def _upload_video(youtube, video_path, meta_path, thumb_path, category_id, label="video"):
+def _upload_video(youtube, video_path, meta_path, thumb_path, category_id,
+                   label="video", yt_channel_name=None):
     """Upload a single video to YouTube. Returns (success, url)."""
     from googleapiclient.http import MediaFileUpload
 
@@ -540,8 +573,10 @@ def _upload_video(youtube, video_path, meta_path, thumb_path, category_id, label
             print(f"    -> Progress: {int(status.progress() * 100)}%")
 
     vid = response["id"]
+    channel_id_resp = response.get("snippet", {}).get("channelId", "unknown")
     url = f"https://youtu.be/{vid}"
-    print(f"    -> Uploaded {label}: {url}")
+    dest = yt_channel_name or channel_id_resp
+    print(f"    -> Uploaded {label}: {url} (to: {dest})")
 
     # Upload thumbnail if exists
     if thumb_path and thumb_path.exists():
@@ -561,7 +596,7 @@ def phase7_upload(ch, out_dir, lang):
     """Phase 7: Upload long video + short video to YouTube."""
     print(f"  [Phase 7] YouTube upload...")
 
-    youtube = _build_youtube_client(ch, lang)
+    youtube, yt_channel_name = _build_youtube_client(ch, lang)
     if youtube is None:
         return False, None, None
 
@@ -575,6 +610,7 @@ def phase7_upload(ch, out_dir, lang):
         out_dir / "out" / "thumbnail.png",
         category_id,
         label="long",
+        yt_channel_name=yt_channel_name,
     )
 
     # Wait between uploads to avoid rate limits
@@ -590,6 +626,7 @@ def phase7_upload(ch, out_dir, lang):
         out_dir / "out" / "short_thumbnail.png",
         category_id,
         label="short",
+        yt_channel_name=yt_channel_name,
     )
 
     return long_ok or short_ok, long_url, short_url
