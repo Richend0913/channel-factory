@@ -56,7 +56,7 @@ jobs:
           pip install \
             edge-tts \
             pydub \
-            deep-translator \
+            requests \
             google-api-python-client \
             google-auth-oauthlib \
             google-auth-httplib2

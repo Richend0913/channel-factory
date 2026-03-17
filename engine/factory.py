@@ -124,8 +124,37 @@ def load_configs(channel_filter=None):
 
 
 # ============================================================
-# Phase 0: Trend Research (placeholder — needs web search API)
+# Phase 0: Trend Research (Google News RSS + scraping)
 # ============================================================
+def _fetch_trending_topics(keywords, num_results=10):
+    """Fetch trending topics from Google News RSS for given keywords."""
+    import re
+    try:
+        import requests
+    except ImportError:
+        print(f"    -> Missing: pip install requests")
+        return []
+
+    topics = []
+    for kw in keywords[:3]:  # limit to 3 keywords
+        try:
+            url = f"https://news.google.com/rss/search?q={requests.utils.quote(kw)}&hl=en-US&gl=US&ceid=US:en"
+            resp = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
+            if resp.status_code != 200:
+                continue
+            # Parse RSS XML with regex (no lxml dependency needed)
+            titles = re.findall(r"<title><!\[CDATA\[(.+?)\]\]></title>", resp.text)
+            if not titles:
+                titles = re.findall(r"<title>(.+?)</title>", resp.text)
+            for t in titles[1:num_results+1]:  # skip RSS feed title
+                clean = re.sub(r"\s*-\s*[A-Za-z].*$", "", t).strip()
+                if len(clean) > 10:
+                    topics.append({"headline": clean, "keyword": kw})
+        except Exception as e:
+            print(f"    -> RSS fetch failed for '{kw}': {e}")
+    return topics
+
+
 def phase0_research(ch, out_dir):
     """Phase 0: Trend research and topic selection."""
     print(f"  [Phase 0] Trend research for {ch['name']}...")
@@ -134,32 +163,124 @@ def phase0_research(ch, out_dir):
         print(f"    -> research.json already exists, skipping")
         return True
 
-    # Load used topics to avoid duplicates
     used = load_used_topics(out_dir)
     if used:
         print(f"    -> {len(used)} previously used topics loaded (will exclude)")
 
-    # In production, this would call web search APIs and score topics.
-    # For now, generate a placeholder indicating manual research is needed.
+    # Fetch trending topics from Google News
+    en_keywords = ch.get("search_keywords_en", [])
+    if not en_keywords:
+        # Auto-generate English keywords from channel config
+        genre = ch.get("genre", "")
+        name = ch.get("name", "")
+        en_keywords = [name, genre.split("・")[0] if "・" in genre else genre]
+    print(f"    -> Searching trends for: {en_keywords}")
+    headlines = _fetch_trending_topics(en_keywords)
+    print(f"    -> Found {len(headlines)} trending headlines")
+
+    # Filter out used topics (fuzzy match on first 30 chars)
+    used_lower = [t.lower()[:30] for t in used]
+    fresh = [h for h in headlines if h["headline"].lower()[:30] not in used_lower]
+    print(f"    -> {len(fresh)} fresh topics after filtering")
+
     research = {
-        "status": "pending",
-        "keywords": ch.get("search_keywords", []),
-        "used_topics": used,
-        "note": "Automated research requires web search API integration. "
-                "Provide a topic manually or run with Claude Code for full research. "
-                "Topics in used_topics have already been covered — choose a new angle.",
+        "status": "ready",
+        "keywords": en_keywords,
+        "headlines": fresh[:10],
+        "used_topics_count": len(used),
     }
     with open(research_file, "w", encoding="utf-8") as f:
         json.dump(research, f, indent=2, ensure_ascii=False)
-    print(f"    -> research.json created (manual topic selection needed)")
+    print(f"    -> research.json created with {len(fresh[:10])} candidate topics")
     return True
 
 
 # ============================================================
-# Phase 1: Script Generation (placeholder — needs LLM API)
+# Phase 1: Script Generation (template-based, no paid API)
 # ============================================================
+
+# Script templates per channel genre — each is a function that takes
+# (topic, main_name, sub_name) and returns a list of dialogue dicts.
+# The topic comes from Phase 0 research headlines.
+
+def _generate_script_from_template(ch, topic, lang):
+    """Generate a script.json from channel config and a topic string.
+
+    Uses a fixed 5-act structure (HOOK→CONFLICT→INVESTIGATION→TWIST→RESOLUTION→OUTRO)
+    with the channel's character names and speaking styles.
+    """
+    main = ch["characters"]["main"]["name"]
+    sub = ch["characters"]["sub"]["name"]
+
+    # Build a script that works for any channel genre
+    # The template uses the topic headline as the central claim to investigate
+    lines = [
+        # HOOK (4 lines)
+        {"scene": "HookScene", "speaker": "SUB", "character_name": sub,
+         "text": f"So I keep seeing this everywhere — {topic}. Is that actually true?"},
+        {"scene": "HookScene", "speaker": "MAIN", "character_name": main,
+         "text": f"I spent the last week digging into the data on this. Short answer? It's way more complicated than the headlines suggest."},
+        {"scene": "HookScene", "speaker": "SUB", "character_name": sub,
+         "text": "More complicated how?"},
+        {"scene": "HookScene", "speaker": "MAIN", "character_name": main,
+         "text": "The mainstream narrative gets about three things completely wrong. Let me walk you through what I found."},
+
+        # CONFLICT (4 lines)
+        {"scene": "ConflictScene", "speaker": "SUB", "character_name": sub,
+         "text": "OK, what's the first thing people get wrong?"},
+        {"scene": "ConflictScene", "speaker": "MAIN", "character_name": main,
+         "text": f"The biggest misconception is that {topic.lower()} is straightforward. But when you look at the actual numbers, the picture flips. Most people are working with outdated information."},
+        {"scene": "ConflictScene", "speaker": "SUB", "character_name": sub,
+         "text": "Outdated how? Like, the data changed?"},
+        {"scene": "ConflictScene", "speaker": "MAIN", "character_name": main,
+         "text": "Completely changed. What was true three years ago is not true today. And almost nobody is talking about the updated data."},
+
+        # INVESTIGATION (4 lines)
+        {"scene": "InvestigationScene", "speaker": "SUB", "character_name": sub,
+         "text": "What does the new data actually show?"},
+        {"scene": "InvestigationScene", "speaker": "MAIN", "character_name": main,
+         "text": "Three key findings stand out. First, the scale is much bigger than reported. Second, the cause is completely different from what experts assumed. And third, there's a pattern that nobody predicted."},
+        {"scene": "InvestigationScene", "speaker": "SUB", "character_name": sub,
+         "text": "A pattern nobody predicted? That sounds dramatic."},
+        {"scene": "InvestigationScene", "speaker": "MAIN", "character_name": main,
+         "text": "It is dramatic. When you plot the data over time, there's a clear inflection point. Before that point, one thing was true. After it, the opposite became true. And most people haven't caught up yet."},
+
+        # TWIST (4 lines)
+        {"scene": "TwistScene", "speaker": "SUB", "character_name": sub,
+         "text": "So what's the real takeaway here?"},
+        {"scene": "TwistScene", "speaker": "MAIN", "character_name": main,
+         "text": "Here's where it gets interesting. The conventional wisdom isn't just slightly wrong — it's pointing people in the exact opposite direction."},
+        {"scene": "TwistScene", "speaker": "SUB", "character_name": sub,
+         "text": "The exact opposite? That's a bold claim."},
+        {"scene": "TwistScene", "speaker": "MAIN", "character_name": main,
+         "text": "Bold but backed by data. If you're making decisions based on what everyone believes, you're likely making the wrong call. The smart move is counterintuitive."},
+
+        # RESOLUTION (4 lines)
+        {"scene": "ResolutionScene", "speaker": "SUB", "character_name": sub,
+         "text": "OK so what should people actually do with this information?"},
+        {"scene": "ResolutionScene", "speaker": "MAIN", "character_name": main,
+         "text": "Three actionable rules. One — stop relying on headlines. Two — check when the data was last updated. Three — look for who benefits from the old narrative staying alive."},
+        {"scene": "ResolutionScene", "speaker": "SUB", "character_name": sub,
+         "text": "Follow the incentives. Classic."},
+        {"scene": "ResolutionScene", "speaker": "MAIN", "character_name": main,
+         "text": "Always follow the incentives. The data doesn't lie, but the people interpreting it sometimes do."},
+
+        # OUTRO (2 lines)
+        {"scene": "OutroScene", "speaker": "SUB", "character_name": sub,
+         "text": "Next time we're diving into another claim that everyone takes for granted. You might be surprised."},
+        {"scene": "OutroScene", "speaker": "MAIN", "character_name": main,
+         "text": "Subscribe so you don't miss it. We test one assumption every week with real data."},
+    ]
+
+    # Add startFrame field
+    for line in lines:
+        line["startFrame"] = 0
+
+    return lines
+
+
 def phase1_script(ch, out_dir, lang):
-    """Phase 1: Generate dialogue script."""
+    """Phase 1: Generate dialogue script from research + template."""
     print(f"  [Phase 1] Script generation ({lang})...")
     audio_dir = out_dir / "src" / "audio"
     audio_dir.mkdir(parents=True, exist_ok=True)
@@ -171,9 +292,28 @@ def phase1_script(ch, out_dir, lang):
         print(f"    -> script.json already exists ({len(script)} lines)")
         return True
 
-    # In production, this calls an LLM to generate the script.
-    print(f"    -> script.json not found. Generate manually or via Claude Code.")
-    return False
+    # Load research to pick a topic
+    research_file = out_dir / "research.json"
+    topic = None
+    if research_file.exists():
+        with open(research_file, encoding="utf-8") as f:
+            research = json.load(f)
+        headlines = research.get("headlines", [])
+        if headlines:
+            topic = headlines[0].get("headline", "")
+            print(f"    -> Topic from research: {topic}")
+
+    if not topic:
+        # Fallback topic from channel config
+        topic = ch.get("concept", ch.get("name", "an interesting topic"))
+        print(f"    -> Using fallback topic: {topic}")
+
+    script = _generate_script_from_template(ch, topic, lang)
+
+    with open(script_path, "w", encoding="utf-8") as f:
+        json.dump(script, f, indent=2, ensure_ascii=False)
+    print(f"    -> script.json generated ({len(script)} lines)")
+    return True
 
 
 # ============================================================
@@ -466,21 +606,98 @@ def _generate_short_from_long(long_path, short_path):
 # ============================================================
 # Phase 6: Metadata Generation
 # ============================================================
+def _generate_metadata_from_script(ch, out_dir):
+    """Generate youtube_metadata.txt from script.json content."""
+    script_path = out_dir / "src" / "audio" / "script.json"
+    if not script_path.exists():
+        return None, None
+
+    with open(script_path, encoding="utf-8") as f:
+        script = json.load(f)
+
+    # Extract topic from the first SUB line (usually the hook question)
+    hook_text = ""
+    for line in script:
+        if line["scene"] == "HookScene":
+            hook_text = line["text"]
+            break
+
+    # Extract key phrases from script for description
+    all_text = " ".join(item["text"] for item in script)
+    word_count = len(all_text.split())
+
+    main_name = ch["characters"]["main"]["name"]
+    sub_name = ch["characters"]["sub"]["name"]
+    channel_name = ch.get("name", "")
+    footer = ch.get("channel_footer_en", ch.get("channel_footer", ""))
+
+    # Generate title — use hook text, trimmed to 70 chars
+    # Title patterns: "The Truth About X", "X — Here's What the Data Says"
+    title = hook_text.rstrip("?").strip()
+    if len(title) > 60:
+        title = title[:57] + "..."
+    title = f"{title} — Here's What the Data Says"
+    if len(title) > 70:
+        title = title[:67] + "..."
+
+    # Generate description from script scenes
+    scene_summaries = []
+    for scene_name in ["ConflictScene", "InvestigationScene", "TwistScene", "ResolutionScene"]:
+        scene_lines = [item["text"] for item in script if item["scene"] == scene_name and item["speaker"] == "MAIN"]
+        if scene_lines:
+            scene_summaries.append(f"- {scene_lines[0][:100]}")
+
+    description = f"""In this video, {main_name} and {sub_name} investigate what everyone gets wrong about this topic.
+
+Key points covered:
+{chr(10).join(scene_summaries[:4])}
+
+{word_count}+ words of data-driven analysis in under 5 minutes.
+
+{footer}"""
+
+    # Generate tags from channel genre and keywords
+    genre_words = ch.get("genre", "").replace("・", " ").replace("、", " ").split()
+    keywords = ch.get("search_keywords", [])
+    tag_words = [channel_name.lower().replace(" ", "")] + \
+                [w.lower() for w in genre_words if len(w) > 2] + \
+                [k.lower().replace(" ", "") for k in keywords[:5]] + \
+                ["data", "analysis", "facts", "debunked", "explained"]
+    tags = list(dict.fromkeys(tag_words))[:15]  # dedupe, max 15
+
+    return title, description, tags
+
+
 def phase6_metadata(ch, out_dir, lang):
-    """Phase 6: Generate YouTube metadata (long + short)."""
+    """Phase 6: Generate YouTube metadata (long + short) from script."""
     print(f"  [Phase 6] Metadata generation ({lang})...")
-    meta_path = out_dir / "out" / "youtube_metadata.txt"
-    meta_short_path = out_dir / "out" / "youtube_metadata_short.txt"
+    out_path = out_dir / "out"
+    out_path.mkdir(parents=True, exist_ok=True)
+    meta_path = out_path / "youtube_metadata.txt"
+    meta_short_path = out_path / "youtube_metadata_short.txt"
 
-    if meta_path.exists():
-        print(f"    -> youtube_metadata.txt already exists, skipping")
+    # Generate long metadata if missing
+    if not meta_path.exists():
+        print(f"    -> Generating youtube_metadata.txt from script...")
+        result = _generate_metadata_from_script(ch, out_dir)
+        if result[0] is None:
+            print(f"    -> No script found, cannot generate metadata")
+            return False
+        title, description, tags = result
+        meta_content = (
+            f"[Title]\n{title}\n\n"
+            f"[Description]\n{description}\n\n"
+            f"[Tags]\n" + " ".join(f"#{t}" for t in tags) + "\n"
+        )
+        with open(meta_path, "w", encoding="utf-8") as f:
+            f.write(meta_content)
+        print(f"    -> youtube_metadata.txt created: {title}")
     else:
-        print(f"    -> youtube_metadata.txt not found. Generate manually or via Claude Code.")
-        return False
+        print(f"    -> youtube_metadata.txt already exists, skipping")
 
-    # Auto-generate short metadata from long metadata if missing
+    # Generate short metadata
     if not meta_short_path.exists() and meta_path.exists():
-        print(f"    -> Generating youtube_metadata_short.txt from long metadata...")
+        print(f"    -> Generating youtube_metadata_short.txt...")
         title, description, tags = parse_metadata(str(meta_path))
         short_title = f"#Shorts {title[:60]}" if title else "#Shorts"
         short_tags = ["Shorts"] + tags[:5]
@@ -714,12 +931,33 @@ def parse_metadata(filepath):
 # ============================================================
 # Main Pipeline
 # ============================================================
+def _clean_previous_run(out_dir):
+    """Remove generated files from previous run so fresh content is created.
+
+    Preserves used_topics.json (persistent) but removes research, script,
+    audio, video, and metadata so they are regenerated.
+    """
+    import shutil
+    preserve = {"used_topics.json"}
+    for item in out_dir.iterdir():
+        if item.name in preserve:
+            continue
+        if item.is_dir():
+            shutil.rmtree(str(item))
+        else:
+            item.unlink()
+
+
 def process_channel(ch, lang, skip_upload=False):
     """Run full pipeline for a single channel."""
     channel_id = ch["id"]
     suffix = "" if lang == "ja" else "_en"
     out_dir = OUTPUT_DIR / f"{channel_id}{suffix}"
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    # Clean previous run's generated files so we create fresh content
+    _clean_previous_run(out_dir)
+    print(f"  -> Cleaned previous output (fresh generation)")
 
     result = {
         "name": ch["name"],
