@@ -207,77 +207,231 @@ def phase0_research(ch, out_dir):
 def _generate_script_from_template(ch, topic, lang):
     """Generate a script.json from channel config and a topic string.
 
-    Uses a fixed 5-act structure (HOOK→CONFLICT→INVESTIGATION→TWIST→RESOLUTION→OUTRO)
-    with the channel's character names and speaking styles.
+    Uses channel-specific dialogue templates based on genre/id.
+    Each channel has its own tone, structure, and content angle.
     """
     main = ch["characters"]["main"]["name"]
     sub = ch["characters"]["sub"]["name"]
+    channel_id = ch["id"]
+    main_style = ch["characters"]["main"].get("style", "assertive")
+    sub_style = ch["characters"]["sub"].get("style", "curious")
 
-    # Build a script that works for any channel genre
-    # The template uses the topic headline as the central claim to investigate
-    lines = [
-        # HOOK (4 lines)
-        {"scene": "HookScene", "speaker": "SUB", "character_name": sub,
-         "text": f"So I keep seeing this everywhere — {topic}. Is that actually true?"},
-        {"scene": "HookScene", "speaker": "MAIN", "character_name": main,
-         "text": f"I spent the last week digging into the data on this. Short answer? It's way more complicated than the headlines suggest."},
-        {"scene": "HookScene", "speaker": "SUB", "character_name": sub,
-         "text": "More complicated how?"},
-        {"scene": "HookScene", "speaker": "MAIN", "character_name": main,
-         "text": "The mainstream narrative gets about three things completely wrong. Let me walk you through what I found."},
+    # Shorten topic for natural dialogue
+    short_topic = topic if len(topic) < 50 else topic[:47] + "..."
 
-        # CONFLICT (4 lines)
-        {"scene": "ConflictScene", "speaker": "SUB", "character_name": sub,
-         "text": "OK, what's the first thing people get wrong?"},
-        {"scene": "ConflictScene", "speaker": "MAIN", "character_name": main,
-         "text": f"The biggest misconception is that {topic.lower()} is straightforward. But when you look at the actual numbers, the picture flips. Most people are working with outdated information."},
-        {"scene": "ConflictScene", "speaker": "SUB", "character_name": sub,
-         "text": "Outdated how? Like, the data changed?"},
-        {"scene": "ConflictScene", "speaker": "MAIN", "character_name": main,
-         "text": "Completely changed. What was true three years ago is not true today. And almost nobody is talking about the updated data."},
+    # Select template based on channel ID
+    if channel_id == "agent_zero":
+        lines = _script_agent_zero(main, sub, topic, short_topic)
+    elif channel_id == "gold_data_lab":
+        lines = _script_gold_data_lab(main, sub, topic, short_topic)
+    elif channel_id == "myth_breaker":
+        lines = _script_myth_breaker(main, sub, topic, short_topic)
+    else:
+        lines = _script_generic(main, sub, topic, short_topic)
 
-        # INVESTIGATION (4 lines)
-        {"scene": "InvestigationScene", "speaker": "SUB", "character_name": sub,
-         "text": "What does the new data actually show?"},
-        {"scene": "InvestigationScene", "speaker": "MAIN", "character_name": main,
-         "text": "Three key findings stand out. First, the scale is much bigger than reported. Second, the cause is completely different from what experts assumed. And third, there's a pattern that nobody predicted."},
-        {"scene": "InvestigationScene", "speaker": "SUB", "character_name": sub,
-         "text": "A pattern nobody predicted? That sounds dramatic."},
-        {"scene": "InvestigationScene", "speaker": "MAIN", "character_name": main,
-         "text": "It is dramatic. When you plot the data over time, there's a clear inflection point. Before that point, one thing was true. After it, the opposite became true. And most people haven't caught up yet."},
-
-        # TWIST (4 lines)
-        {"scene": "TwistScene", "speaker": "SUB", "character_name": sub,
-         "text": "So what's the real takeaway here?"},
-        {"scene": "TwistScene", "speaker": "MAIN", "character_name": main,
-         "text": "Here's where it gets interesting. The conventional wisdom isn't just slightly wrong — it's pointing people in the exact opposite direction."},
-        {"scene": "TwistScene", "speaker": "SUB", "character_name": sub,
-         "text": "The exact opposite? That's a bold claim."},
-        {"scene": "TwistScene", "speaker": "MAIN", "character_name": main,
-         "text": "Bold but backed by data. If you're making decisions based on what everyone believes, you're likely making the wrong call. The smart move is counterintuitive."},
-
-        # RESOLUTION (4 lines)
-        {"scene": "ResolutionScene", "speaker": "SUB", "character_name": sub,
-         "text": "OK so what should people actually do with this information?"},
-        {"scene": "ResolutionScene", "speaker": "MAIN", "character_name": main,
-         "text": "Three actionable rules. One — stop relying on headlines. Two — check when the data was last updated. Three — look for who benefits from the old narrative staying alive."},
-        {"scene": "ResolutionScene", "speaker": "SUB", "character_name": sub,
-         "text": "Follow the incentives. Classic."},
-        {"scene": "ResolutionScene", "speaker": "MAIN", "character_name": main,
-         "text": "Always follow the incentives. The data doesn't lie, but the people interpreting it sometimes do."},
-
-        # OUTRO (2 lines)
-        {"scene": "OutroScene", "speaker": "SUB", "character_name": sub,
-         "text": "Next time we're diving into another claim that everyone takes for granted. You might be surprised."},
-        {"scene": "OutroScene", "speaker": "MAIN", "character_name": main,
-         "text": "Subscribe so you don't miss it. We test one assumption every week with real data."},
-    ]
-
-    # Add startFrame field
     for line in lines:
         line["startFrame"] = 0
-
     return lines
+
+
+def _script_agent_zero(m, s, topic, short_topic):
+    """AGENT ZERO: AI & automation analysis. Assertive + curious."""
+    return [
+        {"scene": "HookScene", "speaker": "SUB", "character_name": s,
+         "text": f"OK so this just dropped — {short_topic}. Everyone's losing their minds. Should they be?"},
+        {"scene": "HookScene", "speaker": "MAIN", "character_name": m,
+         "text": "I ran the numbers myself. And honestly? The reaction is completely backwards."},
+        {"scene": "HookScene", "speaker": "SUB", "character_name": s,
+         "text": "Backwards how? Walk me through it."},
+        {"scene": "HookScene", "speaker": "MAIN", "character_name": m,
+         "text": "Everyone's focused on the headline. Nobody's looking at what's actually happening under the hood. That's where the real story is."},
+        {"scene": "ConflictScene", "speaker": "SUB", "character_name": s,
+         "text": "So what's the disconnect between the headline and reality?"},
+        {"scene": "ConflictScene", "speaker": "MAIN", "character_name": m,
+         "text": f"Here's the thing about {short_topic}. The marketing says one thing. The benchmarks say another. And the actual user data? That tells a completely different story."},
+        {"scene": "ConflictScene", "speaker": "SUB", "character_name": s,
+         "text": "Three different stories? That's a lot of noise."},
+        {"scene": "ConflictScene", "speaker": "MAIN", "character_name": m,
+         "text": "It's intentional noise. When you strip away the hype, you find that the actual performance improvement is maybe 15 percent of what they claim."},
+        {"scene": "InvestigationScene", "speaker": "SUB", "character_name": s,
+         "text": "Alright, show me the receipts. What did you find?"},
+        {"scene": "InvestigationScene", "speaker": "MAIN", "character_name": m,
+         "text": "I tested three scenarios. Coding tasks, writing tasks, and data analysis. The results were shockingly uneven. Great at one, terrible at the others."},
+        {"scene": "InvestigationScene", "speaker": "SUB", "character_name": s,
+         "text": "Which one was it actually good at?"},
+        {"scene": "InvestigationScene", "speaker": "MAIN", "character_name": m,
+         "text": "Boilerplate code generation. That's it. Everything else either matched human speed or was slower once you factor in the error correction time."},
+        {"scene": "TwistScene", "speaker": "SUB", "character_name": s,
+         "text": "Wait. Slower including error correction? Nobody talks about that."},
+        {"scene": "TwistScene", "speaker": "MAIN", "character_name": m,
+         "text": "Exactly. That's the twist. The time you save generating output, you lose debugging it. Net productivity gain for most tasks? Basically zero."},
+        {"scene": "TwistScene", "speaker": "SUB", "character_name": s,
+         "text": "So it's not that the tech is bad. It's that we're measuring wrong."},
+        {"scene": "TwistScene", "speaker": "MAIN", "character_name": m,
+         "text": "Bingo. The metric everyone uses is 'time to first output.' The metric that matters is 'time to correct output.' Huge difference."},
+        {"scene": "ResolutionScene", "speaker": "SUB", "character_name": s,
+         "text": "So how should people actually use this stuff?"},
+        {"scene": "ResolutionScene", "speaker": "MAIN", "character_name": m,
+         "text": "Rule one — use it for well-defined, repetitive tasks only. Rule two — always budget time for verification. Rule three — stop automating things that require judgment."},
+        {"scene": "ResolutionScene", "speaker": "SUB", "character_name": s,
+         "text": "Simple framework. I like it."},
+        {"scene": "ResolutionScene", "speaker": "MAIN", "character_name": m,
+         "text": "Simple works. The people getting real value from AI aren't the ones using it for everything. They're the ones who know exactly where it fits."},
+        {"scene": "OutroScene", "speaker": "SUB", "character_name": s,
+         "text": "Next week we're testing another AI claim that companies don't want you to question."},
+        {"scene": "OutroScene", "speaker": "MAIN", "character_name": m,
+         "text": "Subscribe so you don't miss it. We test the hype with real data every week."},
+    ]
+
+
+def _script_gold_data_lab(m, s, topic, short_topic):
+    """GOLD DATA LAB: Gold/FX/trading analysis. Data-driven + analytical."""
+    return [
+        {"scene": "HookScene", "speaker": "SUB", "character_name": s,
+         "text": f"Big move in the markets — {short_topic}. What's your read on this?"},
+        {"scene": "HookScene", "speaker": "MAIN", "character_name": m,
+         "text": "I've been tracking this setup for two weeks. The price action is telling a very different story than what the news is reporting."},
+        {"scene": "HookScene", "speaker": "SUB", "character_name": s,
+         "text": "Different how? Everyone seems pretty convinced about the direction."},
+        {"scene": "HookScene", "speaker": "MAIN", "character_name": m,
+         "text": "That's exactly why I'm cautious. When everyone agrees, the market usually has other plans. Let me show you what the chart structure reveals."},
+        {"scene": "ConflictScene", "speaker": "SUB", "character_name": s,
+         "text": "OK, break down the technical picture for us."},
+        {"scene": "ConflictScene", "speaker": "MAIN", "character_name": m,
+         "text": f"Look at gold's relationship to the dollar index right now. {short_topic} is creating a divergence we haven't seen since 2020. The correlation broke down completely."},
+        {"scene": "ConflictScene", "speaker": "SUB", "character_name": s,
+         "text": "Correlation breakdown. That usually means something big is coming."},
+        {"scene": "ConflictScene", "speaker": "MAIN", "character_name": m,
+         "text": "Central bank buying is at record levels. China, India, Poland — they're all accumulating. But retail traders are positioned the opposite way."},
+        {"scene": "InvestigationScene", "speaker": "SUB", "character_name": s,
+         "text": "What do the key levels look like?"},
+        {"scene": "InvestigationScene", "speaker": "MAIN", "character_name": m,
+         "text": "Three levels matter right now. The weekly support, the Fibonacci 61.8 retracement, and the volume profile point of control. All three are converging."},
+        {"scene": "InvestigationScene", "speaker": "SUB", "character_name": s,
+         "text": "Confluence zone. That's either a launch pad or a trap."},
+        {"scene": "InvestigationScene", "speaker": "MAIN", "character_name": m,
+         "text": "The COT data tips the balance. Commercial hedgers are the most net long they've been in 18 months. That's smart money positioning for higher prices."},
+        {"scene": "TwistScene", "speaker": "SUB", "character_name": s,
+         "text": "So smart money and dumb money are on opposite sides. Classic."},
+        {"scene": "TwistScene", "speaker": "MAIN", "character_name": m,
+         "text": "Here's the twist. The last three times this exact setup appeared — same COT positioning, same technical confluence — gold rallied between 8 and 14 percent within 60 days."},
+        {"scene": "TwistScene", "speaker": "SUB", "character_name": s,
+         "text": "Three for three? That's a strong pattern."},
+        {"scene": "TwistScene", "speaker": "MAIN", "character_name": m,
+         "text": "Nothing's guaranteed. But the risk-reward right now heavily favors the upside. The asymmetry is what matters in trading."},
+        {"scene": "ResolutionScene", "speaker": "SUB", "character_name": s,
+         "text": "How would you play this?"},
+        {"scene": "ResolutionScene", "speaker": "MAIN", "character_name": m,
+         "text": "Three rules for this setup. One — only enter at the confluence zone, not before. Two — risk no more than one percent per trade. Three — take partial profits at the first resistance."},
+        {"scene": "ResolutionScene", "speaker": "SUB", "character_name": s,
+         "text": "Disciplined approach. No chasing."},
+        {"scene": "ResolutionScene", "speaker": "MAIN", "character_name": m,
+         "text": "Exactly. The edge isn't in the prediction. The edge is in the risk management. Every profitable trader knows that."},
+        {"scene": "OutroScene", "speaker": "SUB", "character_name": s,
+         "text": "Next week we're breaking down another high-probability setup in the precious metals space."},
+        {"scene": "OutroScene", "speaker": "MAIN", "character_name": m,
+         "text": "Subscribe for weekly gold and FX analysis backed by data, not opinions."},
+    ]
+
+
+def _script_myth_breaker(m, s, topic, short_topic):
+    """MYTH BREAKER: Science debunking. Skeptical + enthusiastic."""
+    return [
+        {"scene": "HookScene", "speaker": "SUB", "character_name": s,
+         "text": f"I just read something wild — {short_topic}. Tell me this isn't actually true."},
+        {"scene": "HookScene", "speaker": "MAIN", "character_name": m,
+         "text": "Oh, you're going to love this. I spent the last week reading the actual papers. What most people believe about this is completely backwards."},
+        {"scene": "HookScene", "speaker": "SUB", "character_name": s,
+         "text": "Backwards? Like, the opposite is true?"},
+        {"scene": "HookScene", "speaker": "MAIN", "character_name": m,
+         "text": "Not just the opposite. The original claim was based on a study from the 1990s that has been debunked multiple times. But the myth keeps spreading because it sounds intuitive."},
+        {"scene": "ConflictScene", "speaker": "SUB", "character_name": s,
+         "text": "Wait. A debunked study? How is this still a thing?"},
+        {"scene": "ConflictScene", "speaker": "MAIN", "character_name": m,
+         "text": f"Because {short_topic} hits all the buttons. It's simple, it's memorable, and it confirms what people already want to believe. That's the recipe for an unkillable myth."},
+        {"scene": "ConflictScene", "speaker": "SUB", "character_name": s,
+         "text": "So confirmation bias basically keeps it alive."},
+        {"scene": "ConflictScene", "speaker": "MAIN", "character_name": m,
+         "text": "Confirmation bias plus the telephone game. Each time someone retells it, the claim gets more extreme. The original study was actually way more nuanced."},
+        {"scene": "InvestigationScene", "speaker": "SUB", "character_name": s,
+         "text": "OK, what does the real science actually say?"},
+        {"scene": "InvestigationScene", "speaker": "MAIN", "character_name": m,
+         "text": "There have been at least six major replications. Four of them found no effect at all. One found a tiny effect in the opposite direction. And the last one found it only works under very specific conditions."},
+        {"scene": "InvestigationScene", "speaker": "SUB", "character_name": s,
+         "text": "Six studies and basically none of them support the claim?"},
+        {"scene": "InvestigationScene", "speaker": "MAIN", "character_name": m,
+         "text": "The meta-analysis published in 2023 put it best. Quote: the effect size is indistinguishable from zero when proper controls are applied. End quote. That's science speak for it doesn't work."},
+        {"scene": "TwistScene", "speaker": "SUB", "character_name": s,
+         "text": "So why do people still swear it works for them personally?"},
+        {"scene": "TwistScene", "speaker": "MAIN", "character_name": m,
+         "text": "Here's the twist. The placebo effect IS the effect. When people believe something works, their behavior changes. They try harder, they pay more attention. It's a self-fulfilling prophecy."},
+        {"scene": "TwistScene", "speaker": "SUB", "character_name": s,
+         "text": "The belief itself creates the result. That's kind of beautiful in a twisted way."},
+        {"scene": "TwistScene", "speaker": "MAIN", "character_name": m,
+         "text": "It's fascinating. The myth isn't just wrong — it's accidentally right for the wrong reasons. Your brain is way more powerful than any of these supposed hacks."},
+        {"scene": "ResolutionScene", "speaker": "SUB", "character_name": s,
+         "text": "So what's the takeaway? How do we spot these myths before they fool us?"},
+        {"scene": "ResolutionScene", "speaker": "MAIN", "character_name": m,
+         "text": "Three red flags. One — if a claim sounds too simple to be true, it probably is. Two — check the date and sample size of the original study. Three — look for the replication studies, not just the original."},
+        {"scene": "ResolutionScene", "speaker": "SUB", "character_name": s,
+         "text": "Always check the replications. Got it."},
+        {"scene": "ResolutionScene", "speaker": "MAIN", "character_name": m,
+         "text": "Science isn't about one study. It's about the pattern across many studies. One flashy result means nothing without confirmation."},
+        {"scene": "OutroScene", "speaker": "SUB", "character_name": s,
+         "text": "Next week we're busting another myth that millions of people still believe."},
+        {"scene": "OutroScene", "speaker": "MAIN", "character_name": m,
+         "text": "Subscribe if you want the truth backed by science, not internet folklore."},
+    ]
+
+
+def _script_generic(m, s, topic, short_topic):
+    """Fallback generic template for channels without a specific template."""
+    return [
+        {"scene": "HookScene", "speaker": "SUB", "character_name": s,
+         "text": f"Everyone's talking about {short_topic}. What's actually going on?"},
+        {"scene": "HookScene", "speaker": "MAIN", "character_name": m,
+         "text": "I looked into this deeply. The real story is completely different from what's trending."},
+        {"scene": "HookScene", "speaker": "SUB", "character_name": s,
+         "text": "Different how?"},
+        {"scene": "HookScene", "speaker": "MAIN", "character_name": m,
+         "text": "Three things the mainstream narrative gets wrong. Let me break them down."},
+        {"scene": "ConflictScene", "speaker": "SUB", "character_name": s,
+         "text": "What's the biggest misconception?"},
+        {"scene": "ConflictScene", "speaker": "MAIN", "character_name": m,
+         "text": f"People assume {short_topic} is straightforward. The data tells a different story."},
+        {"scene": "ConflictScene", "speaker": "SUB", "character_name": s,
+         "text": "What story does the data tell?"},
+        {"scene": "ConflictScene", "speaker": "MAIN", "character_name": m,
+         "text": "The numbers shifted dramatically in the last year. Most analysis is based on old data."},
+        {"scene": "InvestigationScene", "speaker": "SUB", "character_name": s,
+         "text": "Show me what you found."},
+        {"scene": "InvestigationScene", "speaker": "MAIN", "character_name": m,
+         "text": "Three findings. The scale is bigger than reported. The cause is different. And there's an unexpected pattern."},
+        {"scene": "InvestigationScene", "speaker": "SUB", "character_name": s,
+         "text": "What pattern?"},
+        {"scene": "InvestigationScene", "speaker": "MAIN", "character_name": m,
+         "text": "A clear turning point in the data. Before and after look completely different."},
+        {"scene": "TwistScene", "speaker": "SUB", "character_name": s,
+         "text": "What's the real takeaway?"},
+        {"scene": "TwistScene", "speaker": "MAIN", "character_name": m,
+         "text": "The conventional wisdom isn't slightly wrong — it's pointing in the opposite direction."},
+        {"scene": "TwistScene", "speaker": "SUB", "character_name": s,
+         "text": "That's a bold claim."},
+        {"scene": "TwistScene", "speaker": "MAIN", "character_name": m,
+         "text": "Bold but backed by evidence. The smart move here is counterintuitive."},
+        {"scene": "ResolutionScene", "speaker": "SUB", "character_name": s,
+         "text": "What should people do?"},
+        {"scene": "ResolutionScene", "speaker": "MAIN", "character_name": m,
+         "text": "Three rules. Verify the source. Check the date. Follow the incentives."},
+        {"scene": "ResolutionScene", "speaker": "SUB", "character_name": s,
+         "text": "Clean and simple."},
+        {"scene": "ResolutionScene", "speaker": "MAIN", "character_name": m,
+         "text": "Simple frameworks beat complex theories every time."},
+        {"scene": "OutroScene", "speaker": "SUB", "character_name": s,
+         "text": "Next time we tackle another claim everyone takes for granted."},
+        {"scene": "OutroScene", "speaker": "MAIN", "character_name": m,
+         "text": "Subscribe so you don't miss it."},
+    ]
 
 
 def phase1_script(ch, out_dir, lang):
