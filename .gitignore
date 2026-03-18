@@ -2,3 +2,5 @@ credentials/*.json
 node_modules/
 *.mp4
 *.mp3
+engine/data_providers/__pycache__/
+test_gold/

@@ -159,10 +159,22 @@ def _fetch_trending_topics(keywords, num_results=10):
 def phase0_research(ch, out_dir):
     """Phase 0: Trend research and topic selection."""
     print(f"  [Phase 0] Trend research for {ch['name']}...")
+    channel_id = ch["id"]
     research_file = out_dir / "research.json"
     if research_file.exists():
         print(f"    -> research.json already exists, skipping")
         return True
+
+    # Channel-specific data fetching
+    if channel_id == "gold_data_lab":
+        try:
+            sys.path.insert(0, str(BASE_DIR / "engine"))
+            from data_providers.gold_data import fetch_gold_data
+            analysis = fetch_gold_data(out_dir)
+            if analysis:
+                print(f"    -> Market data fetched: ${analysis['price']} ({analysis['trend']})")
+        except Exception as e:
+            print(f"    -> Market data fetch failed: {e}")
 
     used = load_used_topics(out_dir)
     if used:
@@ -285,52 +297,106 @@ def _script_agent_zero(m, s, topic, short_topic):
 
 
 def _script_gold_data_lab(m, s, topic, short_topic):
-    """GOLD DATA LAB: Gold/FX/trading analysis. Data-driven + analytical."""
+    """GOLD DATA LAB: Gold/FX/trading analysis with REAL market data from MT5."""
+    # Try to load real market data
+    data = None
+    market_file = OUTPUT_DIR / "gold_data_lab_en" / "market_data.json"
+    if market_file.exists():
+        with open(market_file) as f:
+            data = json.load(f)
+
+    if data:
+        price = data["price"]
+        chg = data["change_pct"]
+        rsi = data["rsi"]
+        trend = data["trend"]
+        sma20 = data["sma20"]
+        sma50 = data["sma50"]
+        sup = data["support"]
+        res = data["resistance"]
+        fib618 = data["fib_levels"]["0.618"]
+        fib382 = data["fib_levels"]["0.382"]
+        week_chg = data.get("week_change_pct", 0)
+        arrow = "up" if chg >= 0 else "down"
+        rsi_zone = "oversold" if rsi < 35 else ("overbought" if rsi > 65 else "neutral")
+    else:
+        # Fallback static values
+        price, chg, rsi, trend = 5000, -0.2, 45, "NEUTRAL"
+        sma20, sma50, sup, res = 5050, 5020, 4950, 5100
+        fib618, fib382, week_chg = 4980, 5040, -1.5
+        arrow, rsi_zone = "down", "neutral"
+
+    # Load news headlines from research.json
+    news_line = ""
+    research_file = OUTPUT_DIR / "gold_data_lab_en" / "research.json"
+    if research_file.exists():
+        with open(research_file) as f:
+            research = json.load(f)
+        headlines = research.get("headlines", [])
+        if headlines:
+            top_news = [h["headline"] for h in headlines[:3]]
+            news_line = ". ".join(top_news[:2])
+
     return [
+        # HOOK — Today's price action
         {"scene": "HookScene", "speaker": "SUB", "character_name": s,
-         "text": f"Big move in the markets — {short_topic}. What's your read on this?"},
+         "text": f"Gold is at {price} dollars right now, {arrow} {abs(chg):.1f} percent today. What's going on?"},
         {"scene": "HookScene", "speaker": "MAIN", "character_name": m,
-         "text": "I've been tracking this setup for two weeks. The price action is telling a very different story than what the news is reporting."},
+         "text": f"We're down {abs(week_chg):.1f} percent on the week. The daily chart is showing something interesting — the 20 SMA at {sma20:.0f} is pulling away from price. That's a signal worth watching."},
         {"scene": "HookScene", "speaker": "SUB", "character_name": s,
-         "text": "Different how? Everyone seems pretty convinced about the direction."},
+         "text": f"{'In the news — ' + news_line + '. How does that affect the chart?' if news_line else 'Anything in the news driving this?'}"},
         {"scene": "HookScene", "speaker": "MAIN", "character_name": m,
-         "text": "That's exactly why I'm cautious. When everyone agrees, the market usually has other plans. Let me show you what the chart structure reveals."},
+         "text": f"{'That news is already priced into the move. But ' if news_line else ''}The 50 SMA sits at {sma50:.0f}. Price is {('above' if price > sma50 else 'below')} both moving averages. The chart structure tells us more than headlines."},
+
+        # CONFLICT — Support/Resistance battle
         {"scene": "ConflictScene", "speaker": "SUB", "character_name": s,
-         "text": "OK, break down the technical picture for us."},
+         "text": "Where are the key levels?"},
         {"scene": "ConflictScene", "speaker": "MAIN", "character_name": m,
-         "text": f"Look at gold's relationship to the dollar index right now. {short_topic} is creating a divergence we haven't seen since 2020. The correlation broke down completely."},
+         "text": f"Support is at {sup:.0f}. That's the 20-day low. Resistance at {res:.0f}. That's the range we're trading in right now."},
         {"scene": "ConflictScene", "speaker": "SUB", "character_name": s,
-         "text": "Correlation breakdown. That usually means something big is coming."},
+         "text": f"So we're closer to {'support' if price - sup < res - price else 'resistance'}. What does that mean for entries?"},
         {"scene": "ConflictScene", "speaker": "MAIN", "character_name": m,
-         "text": "Central bank buying is at record levels. China, India, Poland — they're all accumulating. But retail traders are positioned the opposite way."},
+         "text": f"Look at the Fibonacci retracement. The 61.8 level at {fib618:.0f} and the 38.2 at {fib382:.0f} — these are the zones where institutional orders cluster. Price is {'approaching' if abs(price - fib618) < 50 else 'between'} these levels."},
+
+        # INVESTIGATION — RSI + Intraday
         {"scene": "InvestigationScene", "speaker": "SUB", "character_name": s,
-         "text": "What do the key levels look like?"},
+         "text": "What's the RSI telling us?"},
         {"scene": "InvestigationScene", "speaker": "MAIN", "character_name": m,
-         "text": "Three levels matter right now. The weekly support, the Fibonacci 61.8 retracement, and the volume profile point of control. All three are converging."},
+         "text": f"RSI 14 is at {rsi:.0f}. That's {rsi_zone}. {'This means selling pressure is extreme — a bounce is statistically likely.' if rsi < 35 else 'This means buying pressure is extreme — a pullback is overdue.' if rsi > 65 else 'No extreme readings, so we need other signals to confirm direction.'}"},
         {"scene": "InvestigationScene", "speaker": "SUB", "character_name": s,
-         "text": "Confluence zone. That's either a launch pad or a trap."},
+         "text": "What about the intraday picture? The 15-minute chart?"},
         {"scene": "InvestigationScene", "speaker": "MAIN", "character_name": m,
-         "text": "The COT data tips the balance. Commercial hedgers are the most net long they've been in 18 months. That's smart money positioning for higher prices."},
+         "text": f"The M15 chart shows EMA 9 and EMA 21 crossovers marking short-term entries. For scalpers, the current setup {'favors long entries near support' if price - sup < 30 else 'favors short entries near resistance' if res - price < 30 else 'is ranging — wait for a breakout of the EMA channel'}."},
+
+        # TWIST — The hidden signal
         {"scene": "TwistScene", "speaker": "SUB", "character_name": s,
-         "text": "So smart money and dumb money are on opposite sides. Classic."},
+         "text": "So what's the play here? Long or short?"},
         {"scene": "TwistScene", "speaker": "MAIN", "character_name": m,
-         "text": "Here's the twist. The last three times this exact setup appeared — same COT positioning, same technical confluence — gold rallied between 8 and 14 percent within 60 days."},
+         "text": f"Here's what most traders miss. The overall trend on the daily is {trend.lower()}. But the RSI at {rsi:.0f} is {'diverging from price — classic reversal signal' if rsi < 35 or rsi > 65 else 'not at extremes — so we follow the trend, not fight it'}."},
         {"scene": "TwistScene", "speaker": "SUB", "character_name": s,
-         "text": "Three for three? That's a strong pattern."},
+         "text": "Trend plus momentum. Clean analysis."},
         {"scene": "TwistScene", "speaker": "MAIN", "character_name": m,
-         "text": "Nothing's guaranteed. But the risk-reward right now heavily favors the upside. The asymmetry is what matters in trading."},
+         "text": f"The asymmetry is {'in favor of longs here' if trend == 'BULLISH' and rsi < 40 else 'in favor of shorts here' if trend == 'BEARISH' and rsi > 60 else 'neutral — patience is the trade today'}. Risk-reward matters more than direction."},
+
+        # RESOLUTION — Trade plan + Second Chance
         {"scene": "ResolutionScene", "speaker": "SUB", "character_name": s,
-         "text": "How would you play this?"},
+         "text": "Give us the trade plan."},
         {"scene": "ResolutionScene", "speaker": "MAIN", "character_name": m,
-         "text": "Three rules for this setup. One — only enter at the confluence zone, not before. Two — risk no more than one percent per trade. Three — take partial profits at the first resistance."},
+         "text": f"Primary trade: entry at {price:.0f}, stop loss at {sup - 15:.0f}, first target at {sma20:.0f}, second target at {fib382:.0f}. Risk no more than 1 percent."},
         {"scene": "ResolutionScene", "speaker": "SUB", "character_name": s,
-         "text": "Disciplined approach. No chasing."},
+         "text": "What if I missed that entry? Is there a second chance?"},
         {"scene": "ResolutionScene", "speaker": "MAIN", "character_name": m,
-         "text": "Exactly. The edge isn't in the prediction. The edge is in the risk management. Every profitable trader knows that."},
+         "text": f"Yes. Watch the EMA 21 on the M15 chart. If price pulls back to that level around {sma20 * 0.998:.0f}, that's your second chance entry. Same stop loss rules apply. The EMA 21 acts as dynamic support in a trend."},
+        {"scene": "ResolutionScene", "speaker": "SUB", "character_name": s,
+         "text": "And if it breaks down instead?"},
+        {"scene": "ResolutionScene", "speaker": "MAIN", "character_name": m,
+         "text": f"If {sup:.0f} breaks with volume, flip the bias. That becomes a breakout sell with a target of {sup - 30:.0f}. Always have a plan for both directions. The market doesn't care about your bias."},
+
+        # OUTRO
         {"scene": "OutroScene", "speaker": "SUB", "character_name": s,
-         "text": "Next week we're breaking down another high-probability setup in the precious metals space."},
+         "text": "Three trades laid out — primary, second chance, and breakout. All on today's chart."},
         {"scene": "OutroScene", "speaker": "MAIN", "character_name": m,
-         "text": "Subscribe for weekly gold and FX analysis backed by data, not opinions."},
+         "text": "Subscribe for daily gold analysis. Tomorrow we check if today's levels held. Fresh charts, real data, no guessing."},
     ]
 
 
@@ -476,52 +542,84 @@ def phase1_script(ch, out_dir, lang):
 # ============================================================
 def phase2_visuals(ch, out_dir):
     """Phase 2: Create Remotion project and visual components."""
+    import shutil
     print(f"  [Phase 2] Visual design...")
     remotion_dir = out_dir / "remotion-project"
+    channel_id = ch["id"]
 
     if (remotion_dir / "src" / "MainVideo.tsx").exists():
         print(f"    -> Remotion project already exists")
         return True
 
-    # Auto-setup from template
-    template_dir = BASE_DIR / "engine" / "remotion-template"
-    if template_dir.exists():
-        import shutil
-        print(f"    -> Copying Remotion template...")
-        if remotion_dir.exists():
-            shutil.rmtree(str(remotion_dir))
+    # Check for channel-specific template first, then fallback to generic
+    channel_template = BASE_DIR / "engine" / "templates" / channel_id
+    generic_template = BASE_DIR / "engine" / "remotion-template"
+    template_dir = channel_template if channel_template.exists() else generic_template
+
+    if not template_dir.exists():
+        print(f"    -> No template found for {channel_id}")
+        return False
+
+    template_name = "channel-specific" if template_dir == channel_template else "generic"
+    print(f"    -> Using {template_name} template for {channel_id}")
+
+    # Copy template, preserving node_modules if they exist
+    if remotion_dir.exists():
+        # Save node_modules
+        nm = remotion_dir / "node_modules"
+        nm_exists = nm.exists()
+        if nm_exists:
+            nm_tmp = out_dir / "_node_modules_tmp"
+            if nm_tmp.exists():
+                shutil.rmtree(str(nm_tmp), ignore_errors=True)
+            nm.rename(nm_tmp)
+        # Remove old remotion dir
+        shutil.rmtree(str(remotion_dir), ignore_errors=True)
+        shutil.copytree(str(template_dir), str(remotion_dir))
+        # Restore node_modules
+        if nm_exists and (out_dir / "_node_modules_tmp").exists():
+            (out_dir / "_node_modules_tmp").rename(remotion_dir / "node_modules")
+    else:
         shutil.copytree(str(template_dir), str(remotion_dir))
 
-        # Apply channel-specific colors to both MainVideo and ShortVideo
-        colors = ch.get("colors", {})
-        if colors:
-            color_map = {
-                "#07080f": colors.get("background", "#07080f"),
-                "#4fffff": colors.get("primary", "#4fffff"),
-                "#a855f7": colors.get("secondary", "#a855f7"),
-                "#f0f4ff": colors.get("text", "#f0f4ff"),
-            }
-            for tsx_name in ("MainVideo.tsx", "ShortVideo.tsx"):
-                tsx_path = remotion_dir / "src" / tsx_name
-                if tsx_path.exists():
-                    content = tsx_path.read_text(encoding="utf-8")
-                    for old_color, new_color in color_map.items():
+    # Apply channel-specific colors
+    colors = ch.get("colors", {})
+    if colors:
+        color_map = {
+            "#07080f": colors.get("background", "#07080f"),
+            "#4fffff": colors.get("primary", "#4fffff"),
+            "#fbbf24": colors.get("primary", "#fbbf24"),  # gold template uses fbbf24
+            "#a855f7": colors.get("secondary", "#a855f7"),
+            "#f0f4ff": colors.get("text", "#f0f4ff"),
+        }
+        for tsx_name in ("MainVideo.tsx", "ShortVideo.tsx"):
+            tsx_path = remotion_dir / "src" / tsx_name
+            if tsx_path.exists():
+                content = tsx_path.read_text(encoding="utf-8")
+                for old_color, new_color in color_map.items():
+                    if old_color != new_color:
                         content = content.replace(old_color, new_color)
-                    tsx_path.write_text(content, encoding="utf-8")
-            print(f"    -> Applied channel colors to MainVideo + ShortVideo")
+                tsx_path.write_text(content, encoding="utf-8")
+        print(f"    -> Applied channel colors")
 
-        # Copy script.json to public/audio/ if it exists
-        script_src = out_dir / "src" / "audio" / "script.json"
-        audio_pub = remotion_dir / "public" / "audio"
-        audio_pub.mkdir(parents=True, exist_ok=True)
-        if script_src.exists():
-            shutil.copy2(str(script_src), str(audio_pub / "script.json"))
+    # Copy script.json + timing.json to public/audio/
+    script_src = out_dir / "src" / "audio" / "script.json"
+    audio_pub = remotion_dir / "public" / "audio"
+    audio_pub.mkdir(parents=True, exist_ok=True)
+    if script_src.exists():
+        shutil.copy2(str(script_src), str(audio_pub / "script.json"))
 
-        print(f"    -> Remotion project created from template")
-        return True
+    # Copy chart assets if they exist (for gold_data_lab etc.)
+    assets_src = out_dir / "assets"
+    assets_dst = remotion_dir / "public" / "assets"
+    if assets_src.exists() and any(assets_src.iterdir()):
+        assets_dst.mkdir(parents=True, exist_ok=True)
+        for f in assets_src.iterdir():
+            shutil.copy2(str(f), str(assets_dst / f.name))
+        print(f"    -> Copied {len(list(assets_src.iterdir()))} chart assets to Remotion")
 
-    print(f"    -> Remotion project not found and no template available.")
-    return False
+    print(f"    -> Remotion project created from {template_name} template")
+    return True
 
 
 # ============================================================
@@ -689,7 +787,7 @@ def phase5_render(ch, out_dir):
         print(f"    -> Rendering MainVideo...")
         result = subprocess.run(
             [npx_cmd, "remotion", "render", "src/index.ts", "MainVideo",
-             str(video_path), "--concurrency=2", "--timeout=120000"],
+             str(video_path), "--concurrency=1", "--timeout=120000"],
             cwd=str(remotion_dir),
             capture_output=True, text=True, timeout=1800,
             shell=use_shell,
@@ -716,7 +814,7 @@ def phase5_render(ch, out_dir):
             print(f"    -> Rendering YouTubeShort...")
             result = subprocess.run(
                 [npx_cmd, "remotion", "render", "src/index.ts", "YouTubeShort",
-                 str(short_path), "--concurrency=2", "--timeout=120000"],
+                 str(short_path), "--concurrency=1", "--timeout=120000"],
                 cwd=str(remotion_dir),
                 capture_output=True, text=True, timeout=600,
                 shell=use_shell,
