@@ -146,9 +146,10 @@ def _fetch_trending_topics(keywords, num_results=10):
             titles = re.findall(r"<title><!\[CDATA\[(.+?)\]\]></title>", resp.text)
             if not titles:
                 titles = re.findall(r"<title>(.+?)</title>", resp.text)
+            skip_titles = {"Google News", "Google", "News", "Top Stories", ""}
             for t in titles[1:num_results+1]:  # skip RSS feed title
                 clean = re.sub(r"\s*-\s*[A-Za-z].*$", "", t).strip()
-                if len(clean) > 10:
+                if len(clean) > 20 and clean not in skip_titles:
                     topics.append({"headline": clean, "keyword": kw})
         except Exception as e:
             print(f"    -> RSS fetch failed for '{kw}': {e}")
@@ -337,21 +338,23 @@ def phase2_visuals(ch, out_dir):
             shutil.rmtree(str(remotion_dir))
         shutil.copytree(str(template_dir), str(remotion_dir))
 
-        # Apply channel-specific colors if available
+        # Apply channel-specific colors to both MainVideo and ShortVideo
         colors = ch.get("colors", {})
         if colors:
-            main_tsx = remotion_dir / "src" / "MainVideo.tsx"
-            content = main_tsx.read_text(encoding="utf-8")
             color_map = {
                 "#07080f": colors.get("background", "#07080f"),
                 "#4fffff": colors.get("primary", "#4fffff"),
                 "#a855f7": colors.get("secondary", "#a855f7"),
                 "#f0f4ff": colors.get("text", "#f0f4ff"),
             }
-            for old_color, new_color in color_map.items():
-                content = content.replace(old_color, new_color)
-            main_tsx.write_text(content, encoding="utf-8")
-            print(f"    -> Applied channel colors")
+            for tsx_name in ("MainVideo.tsx", "ShortVideo.tsx"):
+                tsx_path = remotion_dir / "src" / tsx_name
+                if tsx_path.exists():
+                    content = tsx_path.read_text(encoding="utf-8")
+                    for old_color, new_color in color_map.items():
+                        content = content.replace(old_color, new_color)
+                    tsx_path.write_text(content, encoding="utf-8")
+            print(f"    -> Applied channel colors to MainVideo + ShortVideo")
 
         # Copy script.json to public/audio/ if it exists
         script_src = out_dir / "src" / "audio" / "script.json"
@@ -492,10 +495,12 @@ def _ensure_remotion_deps(remotion_dir):
     """Install node dependencies if needed. Returns True on success."""
     if not (remotion_dir / "node_modules").exists():
         print(f"    -> Installing npm dependencies...")
+        npm_cmd = "npm.cmd" if sys.platform == "win32" else "npm"
         result = subprocess.run(
-            ["npm", "install"],
+            [npm_cmd, "install"],
             cwd=str(remotion_dir),
             capture_output=True, text=True, timeout=300,
+            shell=(sys.platform == "win32"),
         )
         if result.returncode != 0:
             print(f"    -> npm install failed: {result.stderr[:200]}")
@@ -519,6 +524,9 @@ def phase5_render(ch, out_dir):
     if not _ensure_remotion_deps(remotion_dir):
         return False
 
+    npx_cmd = "npx.cmd" if sys.platform == "win32" else "npx"
+    use_shell = sys.platform == "win32"
+
     # --- Render long video ---
     if video_path.exists():
         size_mb = video_path.stat().st_size / (1024 * 1024)
@@ -526,13 +534,15 @@ def phase5_render(ch, out_dir):
     else:
         print(f"    -> Rendering MainVideo...")
         result = subprocess.run(
-            ["npx", "remotion", "render", "src/index.ts", "MainVideo",
-             str(video_path)],
+            [npx_cmd, "remotion", "render", "src/index.ts", "MainVideo",
+             str(video_path), "--concurrency=2", "--timeout=120000"],
             cwd=str(remotion_dir),
             capture_output=True, text=True, timeout=1800,
+            shell=use_shell,
         )
         if result.returncode != 0:
             print(f"    -> Long render failed: {result.stderr[:300]}")
+            print(f"    -> stdout: {result.stdout[:300]}")
             return False
         size_mb = video_path.stat().st_size / (1024 * 1024)
         print(f"    -> Long video complete: {size_mb:.1f} MB")
@@ -543,19 +553,19 @@ def phase5_render(ch, out_dir):
         print(f"    -> short.mp4 already exists ({size_mb:.1f} MB), skipping")
     else:
         # Check if YouTubeShort composition exists in the project
-        index_ts = remotion_dir / "src" / "index.ts"
-        index_content = index_ts.read_text(encoding="utf-8") if index_ts.exists() else ""
-        if "YouTubeShort" not in index_content:
+        root_tsx = remotion_dir / "src" / "Root.tsx"
+        root_content = root_tsx.read_text(encoding="utf-8") if root_tsx.exists() else ""
+        if "YouTubeShort" not in root_content:
             print(f"    -> No YouTubeShort composition found, generating short from long video...")
-            # Fallback: extract a 58-second highlight from the long video using ffmpeg
             _generate_short_from_long(video_path, short_path)
         else:
             print(f"    -> Rendering YouTubeShort...")
             result = subprocess.run(
-                ["npx", "remotion", "render", "src/index.ts", "YouTubeShort",
-                 str(short_path)],
+                [npx_cmd, "remotion", "render", "src/index.ts", "YouTubeShort",
+                 str(short_path), "--concurrency=2", "--timeout=120000"],
                 cwd=str(remotion_dir),
                 capture_output=True, text=True, timeout=600,
+                shell=use_shell,
             )
             if result.returncode != 0:
                 print(f"    -> Short render failed, falling back to ffmpeg extract...")
@@ -934,18 +944,52 @@ def parse_metadata(filepath):
 def _clean_previous_run(out_dir):
     """Remove generated files from previous run so fresh content is created.
 
-    Preserves used_topics.json (persistent) but removes research, script,
-    audio, video, and metadata so they are regenerated.
+    Preserves used_topics.json and remotion-project/node_modules (large, reusable).
     """
     import shutil
-    preserve = {"used_topics.json"}
+    preserve_files = {"used_topics.json"}
+
+    if not out_dir.exists():
+        return
+
     for item in out_dir.iterdir():
-        if item.name in preserve:
+        if item.name in preserve_files:
             continue
-        if item.is_dir():
-            shutil.rmtree(str(item))
+        if item.name == "remotion-project":
+            # Clean inside remotion-project except node_modules & package*
+            for sub in item.iterdir():
+                if sub.name in ("node_modules", "package.json", "package-lock.json"):
+                    continue
+                try:
+                    if sub.is_dir():
+                        # Use robocopy on Windows to handle long paths
+                        if sys.platform == "win32":
+                            subprocess.run(
+                                ["cmd", "/c", "rmdir", "/s", "/q", str(sub)],
+                                capture_output=True, timeout=30,
+                            )
+                        else:
+                            shutil.rmtree(str(sub), ignore_errors=True)
+                    else:
+                        sub.unlink(missing_ok=True)
+                except Exception:
+                    pass
+        elif item.is_dir():
+            try:
+                if sys.platform == "win32":
+                    subprocess.run(
+                        ["cmd", "/c", "rmdir", "/s", "/q", str(item)],
+                        capture_output=True, timeout=30,
+                    )
+                else:
+                    shutil.rmtree(str(item), ignore_errors=True)
+            except Exception:
+                pass
         else:
-            item.unlink()
+            try:
+                item.unlink(missing_ok=True)
+            except Exception:
+                pass
 
 
 def process_channel(ch, lang, skip_upload=False):
