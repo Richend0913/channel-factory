@@ -17,13 +17,13 @@ interface TimingItem {
 }
 const timing: TimingItem[] = timingData as TimingItem[];
 
-const SCENES: Record<string, { label: string; accent: string; chart?: string }> = {
-  HookScene:          { label: "MARKET OPEN",    accent: C.primary, chart: "chart_main.png" },
-  ConflictScene:      { label: "KEY LEVELS",     accent: C.red,     chart: "chart_fib.png" },
-  InvestigationScene: { label: "INDICATORS",     accent: C.blue,    chart: "chart_h1.png" },
-  TwistScene:         { label: "TRADE SIGNAL",   accent: C.green,   chart: "chart_m15.png" },
-  ResolutionScene:    { label: "TRADE PLAN",     accent: C.green,   chart: "chart_rsi.png" },
-  OutroScene:         { label: "SUBSCRIBE",      accent: C.primary },
+const SCENES: Record<string, { label: string; accent: string; charts: string[] }> = {
+  HookScene:          { label: "MARKET OVERVIEW",  accent: C.primary, charts: ["d1_structure.png"] },
+  ConflictScene:      { label: "SMART MONEY",      accent: C.red,     charts: ["fib_step1.png", "fib_step2.png", "fib_step3.png", "fib_step4.png"] },
+  InvestigationScene: { label: "DEEP ANALYSIS",    accent: C.blue,    charts: ["h1_smc.png", "rsi_divergence.png"] },
+  TwistScene:         { label: "TRADE SETUP #1",   accent: C.green,   charts: ["m15_entry1.png"] },
+  ResolutionScene:    { label: "SETUPS #2 & #3",   accent: C.green,   charts: ["m15_entry2.png", "m15_entry3.png"] },
+  OutroScene:         { label: "SUBSCRIBE",        accent: C.primary, charts: [] },
 };
 
 function getActive(frame: number, fps: number) {
@@ -80,13 +80,26 @@ const TickerTape: React.FC<{ frame: number }> = ({ frame }) => {
   );
 };
 
-/* ===== Chart display with zoom/pan animation ===== */
+/* ===== Chart display — cycles through charts array per scene ===== */
 const ChartDisplay: React.FC<{
-  chart: string; frame: number; fps: number; scene: string;
-}> = ({ chart, frame, fps, scene }) => {
+  charts: string[]; frame: number; fps: number; scene: string;
+}> = ({ charts, frame, fps, scene }) => {
   const lf = frame - sceneStartFrame(scene, fps);
 
-  const fadeIn = interpolate(lf, [0, 20], [0, 1], {
+  // Calculate which chart to show based on scene time
+  const sceneDuration = (() => {
+    const lines = timing.filter((t) => t.scene === scene);
+    if (lines.length === 0) return 10;
+    const last = lines[lines.length - 1];
+    return last.audioOffsetSec + last.durationSec - lines[0].audioOffsetSec;
+  })();
+  const chartDuration = sceneDuration / charts.length;
+  const chartIdx = Math.min(charts.length - 1, Math.floor((lf / fps) / chartDuration));
+  const chart = charts[chartIdx];
+
+  // Fade between chart transitions
+  const chartLocalFrame = lf - Math.round(chartIdx * chartDuration * fps);
+  const fadeIn = interpolate(chartLocalFrame, [0, 15], [0, 1], {
     extrapolateLeft: "clamp", extrapolateRight: "clamp",
   });
 
@@ -183,8 +196,8 @@ export const MainVideo: React.FC = () => {
       </div>
 
       {/* Main chart / visual area */}
-      {cfg.chart ? (
-        <ChartDisplay chart={cfg.chart} frame={frame} fps={fps} scene={scene} />
+      {cfg.charts.length > 0 ? (
+        <ChartDisplay charts={cfg.charts} frame={frame} fps={fps} scene={scene} />
       ) : (
         <OutroVisual frame={frame} fps={fps} />
       )}

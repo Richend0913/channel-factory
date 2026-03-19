@@ -25,7 +25,7 @@ OUTPUT_DIR = BASE_DIR / "channels" / "output"
 CREDENTIALS_DIR = BASE_DIR / "credentials"
 
 VOICE_MAP_EN = {
-    "MAIN": "en-US-GuyNeural",
+    "MAIN": "en-US-AndrewNeural",
     "SUB": "en-US-AriaNeural",
 }
 
@@ -297,107 +297,169 @@ def _script_agent_zero(m, s, topic, short_topic):
 
 
 def _script_gold_data_lab(m, s, topic, short_topic):
-    """GOLD DATA LAB: Gold/FX/trading analysis with REAL market data from MT5."""
-    # Try to load real market data
+    """GOLD DATA LAB: Pro-level gold analysis with SMC concepts."""
+    # Load market data
     data = None
     market_file = OUTPUT_DIR / "gold_data_lab_en" / "market_data.json"
     if market_file.exists():
-        with open(market_file) as f:
+        with open(market_file, encoding="utf-8") as f:
             data = json.load(f)
+
+    # Load pro analysis
+    pro = None
+    pro_file = OUTPUT_DIR / "gold_data_lab_en" / "pro_analysis.json"
+    if pro_file.exists():
+        with open(pro_file, encoding="utf-8") as f:
+            pro = json.load(f)
+
+    # Load news
+    news_line = ""
+    research_file = OUTPUT_DIR / "gold_data_lab_en" / "research.json"
+    if research_file.exists():
+        with open(research_file, encoding="utf-8") as f:
+            research = json.load(f)
+        headlines = research.get("headlines", [])
+        if headlines:
+            news_line = headlines[0].get("headline", "")
 
     if data:
         price = data["price"]
         chg = data["change_pct"]
         rsi = data["rsi"]
-        trend = data["trend"]
         sma20 = data["sma20"]
         sma50 = data["sma50"]
         sup = data["support"]
         res = data["resistance"]
-        fib618 = data["fib_levels"]["0.618"]
-        fib382 = data["fib_levels"]["0.382"]
+        fib618 = data["fib_levels"].get("0.618", 0)
+        fib382 = data["fib_levels"].get("0.382", 0)
+        fib50 = data["fib_levels"].get("0.5", 0)
         week_chg = data.get("week_change_pct", 0)
         arrow = "up" if chg >= 0 else "down"
-        rsi_zone = "oversold" if rsi < 35 else ("overbought" if rsi > 65 else "neutral")
     else:
-        # Fallback static values
-        price, chg, rsi, trend = 5000, -0.2, 45, "NEUTRAL"
+        price, chg, rsi = 5000, -0.2, 45
         sma20, sma50, sup, res = 5050, 5020, 4950, 5100
-        fib618, fib382, week_chg = 4980, 5040, -1.5
-        arrow, rsi_zone = "down", "neutral"
+        fib618, fib382, fib50, week_chg = 4980, 5040, 5010, -1.5
+        arrow = "down"
 
-    # Load news headlines from research.json
-    news_line = ""
-    research_file = OUTPUT_DIR / "gold_data_lab_en" / "research.json"
-    if research_file.exists():
-        with open(research_file) as f:
-            research = json.load(f)
-        headlines = research.get("headlines", [])
-        if headlines:
-            top_news = [h["headline"] for h in headlines[:3]]
-            news_line = ". ".join(top_news[:2])
+    # Pro analysis data
+    if pro:
+        bias = pro["bias"]
+        confidence = pro["confidence"]
+        td1, th4, th1 = pro["trend_d1"], pro["trend_h4"], pro["trend_h1"]
+        n_ob = pro["order_blocks"]
+        n_fvg = pro["fvg"]
+        n_div = len(pro.get("divergences", []))
+        setups = pro.get("setups", [])
+        s1 = setups[0] if len(setups) > 0 else None
+        s2 = setups[1] if len(setups) > 1 else None
+        s3 = setups[2] if len(setups) > 2 else None
+        div_text = ""
+        if pro.get("divergences"):
+            d = pro["divergences"][-1]
+            div_text = f"{d['type'].replace('_', ' ')} divergence — RSI moved from {d['rsi_start']:.0f} to {d['rsi_end']:.0f} while price went the other way"
+    else:
+        bias, confidence = "NEUTRAL", 50
+        td1, th4, th1 = "RANGING", "RANGING", "RANGING"
+        n_ob, n_fvg, n_div = 0, 0, 0
+        s1 = s2 = s3 = None
+        div_text = ""
 
-    return [
-        # HOOK — Today's price action
+    lines = [
+        # HOOK — Price + Multi-TF + News
         {"scene": "HookScene", "speaker": "SUB", "character_name": s,
-         "text": f"Gold is at {price} dollars right now, {arrow} {abs(chg):.1f} percent today. What's going on?"},
+         "text": f"Gold at {price:.0f} dollars, {arrow} {abs(chg):.1f} percent.{' ' + news_line[:80] + '.' if news_line else ''} What's the setup?"},
         {"scene": "HookScene", "speaker": "MAIN", "character_name": m,
-         "text": f"We're down {abs(week_chg):.1f} percent on the week. The daily chart is showing something interesting — the 20 SMA at {sma20:.0f} is pulling away from price. That's a signal worth watching."},
+         "text": f"Multi-timeframe analysis shows {td1} on the daily, {th4} on H4, {th1} on H1. Overall bias is {bias} with {confidence:.0f} percent confidence."},
         {"scene": "HookScene", "speaker": "SUB", "character_name": s,
-         "text": f"{'In the news — ' + news_line + '. How does that affect the chart?' if news_line else 'Anything in the news driving this?'}"},
+         "text": f"{'All timeframes aligned — strong signal.' if td1 == th4 == th1 else 'Mixed signals across timeframes.'}"},
         {"scene": "HookScene", "speaker": "MAIN", "character_name": m,
-         "text": f"{'That news is already priced into the move. But ' if news_line else ''}The 50 SMA sits at {sma50:.0f}. Price is {('above' if price > sma50 else 'below')} both moving averages. The chart structure tells us more than headlines."},
+         "text": f"The 20 SMA at {sma20:.0f} and 50 SMA at {sma50:.0f}. Price is {'above' if price > sma50 else 'below'} both. Down {abs(week_chg):.1f} percent this week. The structure is what matters."},
 
-        # CONFLICT — Support/Resistance battle
+        # CONFLICT — Fib + OB + FVG (Smart Money)
         {"scene": "ConflictScene", "speaker": "SUB", "character_name": s,
-         "text": "Where are the key levels?"},
+         "text": "Break down the smart money picture."},
         {"scene": "ConflictScene", "speaker": "MAIN", "character_name": m,
-         "text": f"Support is at {sup:.0f}. That's the 20-day low. Resistance at {res:.0f}. That's the range we're trading in right now."},
+         "text": f"I found {n_ob} order blocks and {n_fvg} fair value gaps on the H4 chart. These are zones where institutions placed their orders. Support at {sup:.0f}, resistance at {res:.0f}."},
         {"scene": "ConflictScene", "speaker": "SUB", "character_name": s,
-         "text": f"So we're closer to {'support' if price - sup < res - price else 'resistance'}. What does that mean for entries?"},
+         "text": "Where's the Fibonacci sitting?"},
         {"scene": "ConflictScene", "speaker": "MAIN", "character_name": m,
-         "text": f"Look at the Fibonacci retracement. The 61.8 level at {fib618:.0f} and the 38.2 at {fib382:.0f} — these are the zones where institutional orders cluster. Price is {'approaching' if abs(price - fib618) < 50 else 'between'} these levels."},
+         "text": f"The 61.8 retracement at {fib618:.0f}, the 50 level at {fib50:.0f}, and 38.2 at {fib382:.0f}. When an order block lines up with a fib level, that's institutional confluence. That's where the real entries are."},
 
-        # INVESTIGATION — RSI + Intraday
+        # INVESTIGATION — RSI Divergence + H1 Structure
         {"scene": "InvestigationScene", "speaker": "SUB", "character_name": s,
-         "text": "What's the RSI telling us?"},
+         "text": "What about momentum? Any divergences?"},
         {"scene": "InvestigationScene", "speaker": "MAIN", "character_name": m,
-         "text": f"RSI 14 is at {rsi:.0f}. That's {rsi_zone}. {'This means selling pressure is extreme — a bounce is statistically likely.' if rsi < 35 else 'This means buying pressure is extreme — a pullback is overdue.' if rsi > 65 else 'No extreme readings, so we need other signals to confirm direction.'}"},
+         "text": f"RSI is at {rsi:.0f}. {'That is deeply oversold.' if rsi < 30 else 'That is overbought territory.' if rsi > 70 else 'Neutral zone.'} {div_text + '.' if div_text else 'No major divergences right now — momentum confirms the trend.'}"},
         {"scene": "InvestigationScene", "speaker": "SUB", "character_name": s,
-         "text": "What about the intraday picture? The 15-minute chart?"},
+         "text": "And the H1 chart? Break of structure anywhere?"},
         {"scene": "InvestigationScene", "speaker": "MAIN", "character_name": m,
-         "text": f"The M15 chart shows EMA 9 and EMA 21 crossovers marking short-term entries. For scalpers, the current setup {'favors long entries near support' if price - sup < 30 else 'favors short entries near resistance' if res - price < 30 else 'is ranging — wait for a breakout of the EMA channel'}."},
-
-        # TWIST — The hidden signal
-        {"scene": "TwistScene", "speaker": "SUB", "character_name": s,
-         "text": "So what's the play here? Long or short?"},
-        {"scene": "TwistScene", "speaker": "MAIN", "character_name": m,
-         "text": f"Here's what most traders miss. The overall trend on the daily is {trend.lower()}. But the RSI at {rsi:.0f} is {'diverging from price — classic reversal signal' if rsi < 35 or rsi > 65 else 'not at extremes — so we follow the trend, not fight it'}."},
-        {"scene": "TwistScene", "speaker": "SUB", "character_name": s,
-         "text": "Trend plus momentum. Clean analysis."},
-        {"scene": "TwistScene", "speaker": "MAIN", "character_name": m,
-         "text": f"The asymmetry is {'in favor of longs here' if trend == 'BULLISH' and rsi < 40 else 'in favor of shorts here' if trend == 'BEARISH' and rsi > 60 else 'neutral — patience is the trade today'}. Risk-reward matters more than direction."},
-
-        # RESOLUTION — Trade plan + Second Chance
-        {"scene": "ResolutionScene", "speaker": "SUB", "character_name": s,
-         "text": "Give us the trade plan."},
-        {"scene": "ResolutionScene", "speaker": "MAIN", "character_name": m,
-         "text": f"Primary trade: entry at {price:.0f}, stop loss at {sup - 15:.0f}, first target at {sma20:.0f}, second target at {fib382:.0f}. Risk no more than 1 percent."},
-        {"scene": "ResolutionScene", "speaker": "SUB", "character_name": s,
-         "text": "What if I missed that entry? Is there a second chance?"},
-        {"scene": "ResolutionScene", "speaker": "MAIN", "character_name": m,
-         "text": f"Yes. Watch the EMA 21 on the M15 chart. If price pulls back to that level around {sma20 * 0.998:.0f}, that's your second chance entry. Same stop loss rules apply. The EMA 21 acts as dynamic support in a trend."},
-        {"scene": "ResolutionScene", "speaker": "SUB", "character_name": s,
-         "text": "And if it breaks down instead?"},
-        {"scene": "ResolutionScene", "speaker": "MAIN", "character_name": m,
-         "text": f"If {sup:.0f} breaks with volume, flip the bias. That becomes a breakout sell with a target of {sup - 30:.0f}. Always have a plan for both directions. The market doesn't care about your bias."},
-
-        # OUTRO
-        {"scene": "OutroScene", "speaker": "SUB", "character_name": s,
-         "text": "Three trades laid out — primary, second chance, and breakout. All on today's chart."},
-        {"scene": "OutroScene", "speaker": "MAIN", "character_name": m,
-         "text": "Subscribe for daily gold analysis. Tomorrow we check if today's levels held. Fresh charts, real data, no guessing."},
+         "text": f"The H1 shows {'bullish' if th1 == 'BULLISH' else 'bearish' if th1 == 'BEARISH' else 'ranging'} market structure. I detected {pro.get('bos', 0) if pro else 0} breaks of structure and {pro.get('choch', 0) if pro else 0} changes of character. {'The BOS confirms continuation.' if pro and pro.get('bos', 0) > 2 else 'Watch for a CHOCH to signal reversal.'}"},
     ]
+
+    # TWIST — Top trade setup with confluence score
+    if s1:
+        lines.extend([
+            {"scene": "TwistScene", "speaker": "SUB", "character_name": s,
+             "text": f"What's the highest conviction trade?"},
+            {"scene": "TwistScene", "speaker": "MAIN", "character_name": m,
+             "text": f"Setup number one: {s1['label']}. Confluence score {s1['score']} out of 10. {' '.join(s1['reasons'][:2])}."},
+            {"scene": "TwistScene", "speaker": "SUB", "character_name": s,
+             "text": f"Score of {s1['score']}. {'That is high confidence.' if s1['score'] >= 7 else 'Decent setup.' if s1['score'] >= 5 else 'Lower confidence — need tight risk management.'}"},
+            {"scene": "TwistScene", "speaker": "MAIN", "character_name": m,
+             "text": f"{s1['direction']} entry at {s1['entry']:.0f}. Stop loss at {s1['sl']:.0f}. First target {s1['tp1']:.0f}, second target {s1['tp2']:.0f}, extended target {s1['tp3']:.0f}. Risk-reward is 1 to {s1['rr']:.1f}."},
+        ])
+    else:
+        lines.extend([
+            {"scene": "TwistScene", "speaker": "SUB", "character_name": s,
+             "text": "What's the play?"},
+            {"scene": "TwistScene", "speaker": "MAIN", "character_name": m,
+             "text": "No high-confluence setup today. Sometimes the best trade is no trade. Patience is a position."},
+            {"scene": "TwistScene", "speaker": "SUB", "character_name": s,
+             "text": "Fair enough."},
+            {"scene": "TwistScene", "speaker": "MAIN", "character_name": m,
+             "text": "We wait for structure to develop. Check back tomorrow for updated levels."},
+        ])
+
+    # RESOLUTION — Setup 2 (second chance) + Setup 3 (reversal)
+    if s2:
+        lines.extend([
+            {"scene": "ResolutionScene", "speaker": "SUB", "character_name": s,
+             "text": "What if I missed that entry?"},
+            {"scene": "ResolutionScene", "speaker": "MAIN", "character_name": m,
+             "text": f"Second chance: {s2['label']}. Score {s2['score']} out of 10. Entry at {s2['entry']:.0f}, stop at {s2['sl']:.0f}, target {s2['tp1']:.0f}. {s2['reasons'][0] if s2['reasons'] else ''}."},
+        ])
+    else:
+        lines.extend([
+            {"scene": "ResolutionScene", "speaker": "SUB", "character_name": s,
+             "text": "Any backup plan?"},
+            {"scene": "ResolutionScene", "speaker": "MAIN", "character_name": m,
+             "text": f"Watch the EMA 21 on M15 for a pullback entry. Same direction, better risk-reward."},
+        ])
+
+    if s3:
+        lines.extend([
+            {"scene": "ResolutionScene", "speaker": "SUB", "character_name": s,
+             "text": "And if everything flips?"},
+            {"scene": "ResolutionScene", "speaker": "MAIN", "character_name": m,
+             "text": f"Reversal plan: {s3['label']}. Entry at {s3['entry']:.0f}, stop at {s3['sl']:.0f}, target {s3['tp1']:.0f}. Only triggers if {'support breaks' if s3['direction'] == 'SHORT' else 'resistance breaks'}. Always have a plan for both directions."},
+        ])
+    else:
+        lines.extend([
+            {"scene": "ResolutionScene", "speaker": "SUB", "character_name": s,
+             "text": "Risk management?"},
+            {"scene": "ResolutionScene", "speaker": "MAIN", "character_name": m,
+             "text": "One percent risk per trade. No exceptions. The edge is in the discipline, not the prediction."},
+        ])
+
+    # OUTRO
+    lines.extend([
+        {"scene": "OutroScene", "speaker": "SUB", "character_name": s,
+         "text": f"Three setups, real data, confluence scoring. {'All from today' + chr(39) + 's live chart.' if data else ''}"},
+        {"scene": "OutroScene", "speaker": "MAIN", "character_name": m,
+         "text": "Subscribe for daily gold analysis. Tomorrow we review today's calls and update the levels. Fresh MT5 charts, smart money concepts, no guessing."},
+    ])
+
+    return lines
 
 
 def _script_myth_breaker(m, s, topic, short_topic):
@@ -722,6 +784,22 @@ def phase4_audio(ch, out_dir, lang):
     combined = segments[0]
     for s in segments[1:]:
         combined += silence + s
+
+    # Mix with BGM if available
+    bgm_path = BASE_DIR / "engine" / "assets" / "cafe_bgm.mp3"
+    if bgm_path.exists():
+        try:
+            bgm = AudioSegment.from_file(str(bgm_path), format="mp3")
+            # Loop BGM to match narration length, reduce volume
+            bgm_vol = bgm - 22  # -22dB (very quiet background)
+            while len(bgm_vol) < len(combined):
+                bgm_vol += bgm - 22
+            bgm_vol = bgm_vol[:len(combined)]
+            combined = combined.overlay(bgm_vol)
+            print(f"    -> Mixed with cafe BGM")
+        except Exception as e:
+            print(f"    -> BGM mix failed: {e}")
+
     combined.export(str(narration_path), format="mp3")
 
     with open(timing_path, "w", encoding="utf-8") as f:

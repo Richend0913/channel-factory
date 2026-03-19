@@ -121,7 +121,46 @@ def fetch_gold_data(out_dir: Path):
     arrow = "\u25B2" if change >= 0 else "\u25BC"
     print(f"    -> {symbol}: ${analysis['price']} {arrow}{analysis['change_pct']:+.2f}% RSI={analysis['rsi']} {trend}")
 
-    _generate_all_charts(df_d1, df_h4, df_h1, df_m15, analysis, sh_idx, sl_idx, assets_dir)
+    # Run pro analysis
+    pro = None
+    try:
+        from data_providers.pro_analysis import run_pro_analysis
+        pro = run_pro_analysis(df_d1, df_h4, df_h1, df_m15, analysis)
+        print(f"    -> Pro analysis: Bias={pro.bias} Confidence={pro.confidence:.0f}%")
+        print(f"    -> OB={len(pro.order_blocks)} FVG={len(pro.fair_value_gaps)} LIQ={len(pro.liquidity_zones)} DIV={len(pro.divergences)}")
+        for s in pro.setups:
+            print(f"    -> Setup: {s.label} (Score:{s.confluence_score}/10 R:R 1:{s.risk_reward})")
+
+        # Save pro analysis to JSON for script generation
+        pro_data = {
+            "bias": pro.bias, "confidence": pro.confidence,
+            "trend_d1": pro.trend_d1, "trend_h4": pro.trend_h4, "trend_h1": pro.trend_h1,
+            "rsi": pro.rsi, "rsi_zone": pro.rsi_zone,
+            "order_blocks": len(pro.order_blocks),
+            "fvg": len(pro.fair_value_gaps),
+            "liquidity_zones": len(pro.liquidity_zones),
+            "divergences": [{"type": d.type, "rsi_start": d.rsi_start, "rsi_end": d.rsi_end} for d in pro.divergences],
+            "bos": len(pro.bos_levels), "choch": len(pro.choch_levels),
+            "setups": [
+                {"label": s.label, "direction": s.direction, "entry": s.entry,
+                 "sl": s.sl, "tp1": s.tp1, "tp2": s.tp2, "tp3": s.tp3,
+                 "score": s.confluence_score, "rr": s.risk_reward,
+                 "reasons": s.reasons, "type": s.type}
+                for s in pro.setups
+            ],
+        }
+        with open(out_dir / "pro_analysis.json", "w", encoding="utf-8") as f:
+            json.dump(pro_data, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        print(f"    -> Pro analysis failed: {e}")
+
+    # Generate charts with pro overlays
+    try:
+        from data_providers.gold_charts_v2 import generate_animated_charts
+        generate_animated_charts(df_d1, df_h4, df_h1, df_m15, analysis, sh_idx, sl_idx, assets_dir, pro=pro)
+    except Exception as e:
+        print(f"    -> V2 charts failed: {e}, falling back")
+        _generate_all_charts(df_d1, df_h4, df_h1, df_m15, analysis, sh_idx, sl_idx, assets_dir)
     return analysis
 
 
